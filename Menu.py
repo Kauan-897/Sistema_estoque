@@ -7,8 +7,8 @@ def sair():
 
 def cadastrar():
     print("Chamando a tela de cadastro...") # Placeholder para teste
-    # import cadastro
-    # cadastro()
+    import cadastro
+    cadastro.abrir_janela_cadastro(janela)
 
 def orcamento():
     print("Chamando a tela de gráfico...") # Placeholder para teste

@@ -167,5 +167,10 @@ btn_csv = tk.Button(janela, text="Abrir Pedido CSV",
                     command=lambda: abrir_pedido_csv(memo_text))
 btn_csv.grid(row=1, column=0, padx=20, pady=10, sticky="ew")
 
+# --- BOTÃO SAIR ---
+btn_sair = tk.Button(janela, text="Sair", command=janela.quit)
+btn_sair.grid(row=5, column=0, padx=20, pady=10, sticky="ew")   
+
+
 
 janela.mainloop()
