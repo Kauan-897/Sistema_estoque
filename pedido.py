@@ -14,10 +14,7 @@ def criar_banco():
         CREATE TABLE IF NOT EXISTS estoque (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nome TEXT NOT NULL,
-            quantidade INTEGER NOT NULL,
-            valor REAL NOT NULL,
-            lucro REAL NOT NULL,
-            venda REAL NOT NULL
+            quantidade INTEGER NOT NULL
         )
         """)
 
@@ -28,8 +25,6 @@ def criar_banco():
             cliente TEXT,
             produto TEXT NOT NULL,
             quantidade INTEGER NOT NULL,
-            setor TEXT,
-            total REAL,
             data TEXT
         )
         """)
