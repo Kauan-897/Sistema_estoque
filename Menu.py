@@ -1,5 +1,8 @@
 import tkinter as tk
 from tkinter import messagebox # <-- ADICIONADO
+import banco # Certifique-se de que banco.py está no mesmo diretório
+# --- Inicializa o banco de dados ao iniciar o Menu ---
+banco.inicializar_banco()
 
 # --- Funções (permanecem as mesmas) ---
 def sair():

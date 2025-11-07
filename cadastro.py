@@ -3,26 +3,6 @@ from tkinter import filedialog, messagebox
 import sqlite3
 import csv
 
-# --- 1. FUNÇÃO DE CRIAÇÃO DO BANCO ---
-# (Esta função está CORRETA como você a enviou)
-def criar_banco():
-    try:
-        conexao = sqlite3.connect("pedidos.db")
-        cursor = conexao.cursor()
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS estoque (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome TEXT NOT NULL UNIQUE, 
-            quantidade INTEGER NOT NULL
-        )
-        """)
-        conexao.commit()
-    except sqlite3.Error as e:
-        print(f"Erro ao verificar/criar banco: {e}")
-    finally:
-        if conexao:
-            conexao.close()
-
 # --- 2. FUNÇÃO DE LÓGICA (CADASTRO CSV) ---
 def _cadastrar_itens_logic(janela_pai, memo_widget):
     
@@ -175,7 +155,7 @@ def _cadastrar_manual_logic(memo_widget, entry_nome, entry_qntd):
 # (Esta função está CORRETA como você a enviou)
 def abrir_janela_cadastro(janela_raiz):
 
-    criar_banco()
+   
 
     janela_cad = tk.Toplevel(janela_raiz)
     janela_cad.title("Cadastrar Itens no Estoque")
