@@ -81,7 +81,7 @@ botao_consulta.pack(fill='x', pady=5)
 botao_pedidos = tk.Button(barra_lateral, text="Pedidos", command=pedidos) 
 botao_pedidos.pack(fill='x', pady=6)
 
-botao_sair = tk.Button(barra_lateral, text="Sair", command=sair, fg="red")
+botao_sair = tk.Button(barra_lateral, text="Sair", command=sair, fg="white",bg= '#C91A1A')
 botao_sair.pack(side='bottom', fill='x', pady=20)
 
 
