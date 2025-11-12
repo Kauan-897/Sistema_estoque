@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
-import sqlite3
+import banco 
 import csv
 
 # --- 2. FUNÇÃO DE LÓGICA (CADASTRO CSV) ---
@@ -11,6 +11,7 @@ def _cadastrar_itens_logic(janela_pai, memo_widget):
     memo_widget.insert(tk.END, "Iniciando cadastro de itens via CSV...\n")
     
     conexao = None
+    cursor = None # <--- MUDANÇA 2: Definir cursor
     itens_cadastrados = 0
     itens_ignorados = 0
     
@@ -25,7 +26,14 @@ def _cadastrar_itens_logic(janela_pai, memo_widget):
             memo_widget.config(state=tk.DISABLED)
             return
             
-        conexao = sqlite3.connect("pedidos.db")
+        # --- MUDANÇA 3: Conexão com MySQL ---
+        conexao = banco.conectar()
+        if not conexao:
+             memo_widget.insert(tk.END, "ERRO: Não foi possível conectar ao banco de dados MySQL.")
+             memo_widget.config(state=tk.DISABLED)
+             return
+        # ------------------------------------
+            
         cursor = conexao.cursor()
 
         with open(caminho_arquivo, "r", encoding="latin-1") as arquivo:
@@ -42,7 +50,8 @@ def _cadastrar_itens_logic(janela_pai, memo_widget):
                 
                 produto_nome = linha[0].strip()
 
-                cursor.execute("SELECT id FROM estoque WHERE nome = ?", (produto_nome,))
+                # --- MUDANÇA 4: Placeholder '?' para '%s' ---
+                cursor.execute("SELECT id FROM estoque WHERE nome = %s", (produto_nome,))
                 produto_existente = cursor.fetchone()
                 
                 if produto_existente:
@@ -51,12 +60,10 @@ def _cadastrar_itens_logic(janela_pai, memo_widget):
                 else:
                     memo_widget.insert(tk.END, f"  -> Cadastrando: '{produto_nome}'...")
                     
-                    # --- CORRIGIDO (Erro 1) ---
-                    # O comando SQL estava com uma vírgula a mais no final: VALUES (?, 0, )
-                    # O correto é apenas VALUES (?, 0)
+                    # --- MUDANÇA 4: Placeholder '?' para '%s' ---
                     cursor.execute("""
                         INSERT INTO estoque (nome, quantidade)
-                        VALUES (?, 0) 
+                        VALUES (%s, 0) 
                     """, (produto_nome,))
                     
                     memo_widget.insert(tk.END, " OK\n")
@@ -80,16 +87,15 @@ def _cadastrar_itens_logic(janela_pai, memo_widget):
         messagebox.showerror("Erro", f"Ocorreu um erro: {e}", parent=janela_pai)
         
     finally:
+        # --- MUDANÇA 5: Fechar manualmente ---
+        if cursor:
+            cursor.close()
         if conexao:
             conexao.close()
         memo_widget.config(state=tk.DISABLED)
 
 # --- 3. FUNÇÃO: LÓGICA DO CADASTRO MANUAL ---
 def _cadastrar_manual_logic(memo_widget, entry_nome, entry_qntd):
-    """
-    Pega os dados dos campos de entrada, valida e salva no banco.
-    Reporta tudo no 'memo_widget'.
-    """
     
     memo_widget.config(state=tk.NORMAL)
     memo_widget.delete('1.0', tk.END)
@@ -112,11 +118,20 @@ def _cadastrar_manual_logic(memo_widget, entry_nome, entry_qntd):
         return
     
     conexao = None
+    cursor = None # <--- MUDANÇA 2: Definir cursor
     try:
-        conexao = sqlite3.connect("pedidos.db")
+        # --- MUDANÇA 3: Conexão com MySQL ---
+        conexao = banco.conectar()
+        if not conexao:
+             memo_widget.insert(tk.END, "ERRO: Não foi possível conectar ao banco de dados MySQL.")
+             memo_widget.config(state=tk.DISABLED)
+             return
+        # ------------------------------------
+        
         cursor = conexao.cursor()
         
-        cursor.execute("SELECT id FROM estoque WHERE nome = ?", (nome,))
+        # --- MUDANÇA 4: Placeholder '?' para '%s' ---
+        cursor.execute("SELECT id FROM estoque WHERE nome = %s", (nome,))
         produto_existente = cursor.fetchone()
         
         if produto_existente:
@@ -125,13 +140,10 @@ def _cadastrar_manual_logic(memo_widget, entry_nome, entry_qntd):
         else:
             memo_widget.insert(tk.END, f"Cadastrando novo item:\n  Nome: {nome}\n  Quantidade Inicial: {quantidade}\n")
             
-            # --- CORRIGIDO (Erro 2) ---
-            # O comando SQL antigo tentava inserir em colunas que não existem mais
-            # (valor, lucro, venda).
-            # O correto é inserir apenas 'nome' e 'quantidade'.
+            # --- MUDANÇA 4: Placeholder '?' para '%s' ---
             cursor.execute("""
                 INSERT INTO estoque (nome, quantidade)
-                VALUES (?, ?)
+                VALUES (%s, %s)
             """, (nome, quantidade))
             
             conexao.commit()
@@ -146,17 +158,18 @@ def _cadastrar_manual_logic(memo_widget, entry_nome, entry_qntd):
         memo_widget.insert(tk.END, f"\n--- ERRO NO BANCO ---\nOcorreu um erro: {e}")
     
     finally:
+        # --- MUDANÇA 5: Fechar manualmente ---
+        if cursor:
+            cursor.close()
         if conexao:
             conexao.close()
         memo_widget.config(state=tk.DISABLED)
 
 
 # --- 4. FUNÇÃO PRINCIPAL (JANELA) ---
-# (Esta função está CORRETA como você a enviou)
+# (Nenhuma mudança necessária aqui, já estava limpa)
 def abrir_janela_cadastro(janela_raiz):
-
-   
-
+    
     janela_cad = tk.Toplevel(janela_raiz)
     janela_cad.title("Cadastrar Itens no Estoque")
     janela_cad.geometry("600x600")

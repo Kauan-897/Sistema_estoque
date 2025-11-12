@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import messagebox
-import sqlite3
+import banco  
 
 # --- 1. FUNÇÃO DE LÓGICA (INTERNA) ---
 # Esta é a função que faz o trabalho
@@ -36,12 +36,20 @@ def _adicionar_stock_logic(memo_widget, entry_nome, entry_qntd):
     
     # 4. Lógica de Banco de Dados
     conexao = None
+    cursor = None # <--- MUDANÇA 2: Definir cursor
     try:
-        conexao = sqlite3.connect("pedidos.db")
+        # --- MUDANÇA 3: Conexão com MySQL ---
+        conexao = banco.conectar()
+        if not conexao:
+             memo_widget.insert(tk.END, "ERRO: Não foi possível conectar ao banco de dados MySQL.")
+             memo_widget.config(state=tk.DISABLED)
+             return
+        # ------------------------------------
+            
         cursor = conexao.cursor()
         
-        # Verifica se o item JÁ EXISTE
-        cursor.execute("SELECT id, quantidade FROM estoque WHERE nome = ?", (nome,))
+        # --- MUDANÇA 4: Placeholder '?' para '%s' ---
+        cursor.execute("SELECT id, quantidade FROM estoque WHERE nome = %s", (nome,))
         produto_existente = cursor.fetchone()
         
         if not produto_existente:
@@ -57,11 +65,11 @@ def _adicionar_stock_logic(memo_widget, entry_nome, entry_qntd):
             memo_widget.insert(tk.END, f"  Stock Antigo: {stock_antigo}\n")
             memo_widget.insert(tk.END, f"  Qtd. Adicionada: {quantidade}\n")
             
-            # --- O COMANDO SQL CHAVE ---
+            # --- MUDANÇA 4: Placeholder '?' para '%s' ---
             cursor.execute("""
                 UPDATE estoque 
-                SET quantidade = quantidade + ? 
-                WHERE nome = ?
+                SET quantidade = quantidade + %s 
+                WHERE nome = %s
             """, (quantidade, nome))
             # ---------------------------
             
@@ -78,13 +86,16 @@ def _adicionar_stock_logic(memo_widget, entry_nome, entry_qntd):
         memo_widget.insert(tk.END, f"\n--- ERRO NO BANCO ---\nOcorreu um erro: {e}")
     
     finally:
+        # --- MUDANÇA 5: Fechar manualmente ---
+        if cursor:
+            cursor.close()
         if conexao:
             conexao.close()
         memo_widget.config(state=tk.DISABLED)
 
 
 # --- 2. FUNÇÃO PRINCIPAL (CRIA A JANELA) ---
-# Esta é a função que o seu MENU vai chamar
+# (Nenhuma mudança necessária aqui, a interface está perfeita)
 def abrir_janela_entrada(janela_raiz):
     
     # Cria a janela "filha" (Toplevel)
