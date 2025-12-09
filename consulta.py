@@ -1,126 +1,213 @@
 import tkinter as tk
-import banco      # <--- MUDANÇA 1: Importa o nosso banco.py
-from tkinter import messagebox
-# import sqlite3  <--- MUDANÇA 1: Removido
+from tkinter import messagebox, ttk # Importa ttk para o Combobox
+import banco
 
+# --- 1. FUNÇÃO: PESQUISAR (Preenche a lista) ---
+def _pesquisar_logic(entry_busca, listbox):
+    termo = entry_busca.get().strip()
+    listbox.delete(0, tk.END)
+    
+    conexao = None
+    cursor = None
+    try:
+        conexao = banco.conectar()
+        if not conexao: return
+        cursor = conexao.cursor()
+        
+        # Agora buscamos CODIGO e STATUS também
+        sql = """
+            SELECT id, codigo, nome, quantidade, status 
+            FROM estoque 
+            WHERE nome LIKE %s OR codigo LIKE %s 
+            ORDER BY nome ASC
+        """
+        like = f"%{termo}%"
+        cursor.execute(sql, (like, like))
+        resultados = cursor.fetchall()
+        
+        if resultados:
+            for row in resultados:
+                # row[0]=id, [1]=cod, [2]=nome, [3]=qtd, [4]=status
+                cod = row[1] if row[1] else "-"
+                status_icon = "🟢" if row[4] == "Ativo" else "🔴"
+                
+                # Exemplo visual: [🟢] [COD] Nome (Qtd: 10) | ID:1
+                display = f"[{status_icon}] [{cod}] {row[2]} (Qtd: {row[3]}) | ID:{row[0]}"
+                listbox.insert(tk.END, display)
+        else:
+            listbox.insert(tk.END, "Nenhum produto encontrado.")
+            
+    except Exception as e:
+        messagebox.showerror("Erro", f"Erro na pesquisa: {e}")
+    finally:
+        if cursor: cursor.close()
+        if conexao: conexao.close()
+
+# --- 2. FUNÇÃO: CARREGAR DADOS PARA EDIÇÃO ---
+def _selecionar_item(event, listbox, entradas):
+    sel = listbox.curselection()
+    if not sel: return
+    
+    texto = listbox.get(sel[0])
+    if "Nenhum produto" in texto: return
+
+    try:
+        # Pega o ID que está no final da string " | ID:123"
+        id_str = texto.split('| ID:')[1].strip()
+        id_produto = int(id_str)
+        
+        conexao = banco.conectar()
+        cursor = conexao.cursor()
+        cursor.execute("SELECT id, codigo, nome, quantidade, status FROM estoque WHERE id = %s", (id_produto,))
+        row = cursor.fetchone()
+        conexao.close()
+        
+        if row:
+            # Preenche os campos da direita
+            entradas['id'].config(state=tk.NORMAL)
+            entradas['id'].delete(0, tk.END)
+            entradas['id'].insert(0, row[0])
+            entradas['id'].config(state=tk.DISABLED)
+            
+            entradas['codigo'].delete(0, tk.END)
+            if row[1]: entradas['codigo'].insert(0, row[1])
+            
+            entradas['nome'].delete(0, tk.END)
+            entradas['nome'].insert(0, row[2])
+            
+            entradas['qtd'].delete(0, tk.END)
+            entradas['qtd'].insert(0, row[3])
+            
+            # Define o status no Combobox
+            status_banco = row[4]
+            if status_banco not in ["Ativo", "Inativo"]: status_banco = "Ativo"
+            entradas['status'].set(status_banco)
+
+    except Exception as e:
+        print(f"Erro ao selecionar: {e}")
+
+# --- 3. FUNÇÃO: SALVAR ALTERAÇÕES ---
+def _salvar_edicao(entradas, listbox, entry_busca):
+    id_produto = entradas['id'].get()
+    if not id_produto: return 
+    
+    novo_cod = entradas['codigo'].get().strip()
+    novo_nome = entradas['nome'].get().strip()
+    nova_qtd = entradas['qtd'].get().strip().replace(',', '.')
+    novo_status = entradas['status'].get()
+    
+    if not novo_nome:
+        messagebox.showwarning("Aviso", "O nome não pode ficar vazio.")
+        return
+
+    conexao = None
+    try:
+        conexao = banco.conectar()
+        cursor = conexao.cursor()
+        
+        cursor.execute("""
+            UPDATE estoque 
+            SET codigo=%s, nome=%s, quantidade=%s, status=%s
+            WHERE id=%s
+        """, (novo_cod, novo_nome, nova_qtd, novo_status, id_produto))
+        
+        conexao.commit()
+        messagebox.showinfo("Sucesso", "Produto atualizado com sucesso!")
+        _pesquisar_logic(entry_busca, listbox)
+        
+    except Exception as e:
+        messagebox.showerror("Erro", f"Erro ao atualizar: {e}")
+    finally:
+        if conexao: conexao.close()
+
+# --- 4. FUNÇÃO: EXCLUIR ---
+def _excluir_produto(entradas, listbox, entry_busca):
+    id_produto = entradas['id'].get()
+    nome = entradas['nome'].get()
+    
+    if not id_produto: return
+    
+    resposta = messagebox.askyesno("Confirmar", f"Tem certeza que deseja apagar '{nome}'?\n\nMelhor usar o Status 'Inativo' se já tiver vendas.")
+    
+    if resposta:
+        conexao = None
+        try:
+            conexao = banco.conectar()
+            cursor = conexao.cursor()
+            cursor.execute("DELETE FROM estoque WHERE id=%s", (id_produto,))
+            conexao.commit()
+            messagebox.showinfo("Sucesso", "Produto apagado.")
+            
+            # Limpa campos
+            entradas['id'].config(state=tk.NORMAL); entradas['id'].delete(0, tk.END); entradas['id'].config(state=tk.DISABLED)
+            entradas['nome'].delete(0, tk.END)
+            entradas['codigo'].delete(0, tk.END)
+            entradas['qtd'].delete(0, tk.END)
+            
+            _pesquisar_logic(entry_busca, listbox)
+            
+        except Exception as e:
+            messagebox.showerror("Erro", f"Não foi possível apagar:\n{e}")
+        finally:
+            if conexao: conexao.close()
+
+
+# --- 5. JANELA PRINCIPAL ---
 def abrir_janela_consulta(janela_mae):
 
-    janela_consulta = tk.Toplevel(janela_mae)
-    janela_consulta.title("Consulta de Estoque")
-    janela_consulta.geometry("600x450")
+    janela = tk.Toplevel(janela_mae)
+    janela.title("Gerenciamento de Estoque")
+    janela.geometry("950x600")
+    janela.transient(janela_mae)
+    janela.grab_set()
 
-    janela_consulta.transient(janela_mae)
-    janela_consulta.grab_set()
+    # Layout
+    frame_esq = tk.Frame(janela)
+    frame_esq.pack(side=tk.LEFT, fill="both", expand=True, padx=10, pady=10)
+    frame_dir = tk.Frame(janela, relief="groove", borderwidth=2)
+    frame_dir.pack(side=tk.RIGHT, fill="y", padx=10, pady=10)
 
-    # --- Funções Internas ---
-
-    def carregar_estoque():
-        # --- MUDANÇA 2: Estrutura de Conexão ---
-        conexao = None
-        cursor = None
-        try:
-            conexao = banco.conectar()
-            if not conexao:
-                messagebox.showerror("Erro de Conexão", "Não foi possível conectar ao banco de dados MySQL.", parent=janela_consulta)
-                return
-                
-            cursor = conexao.cursor()
-            
-            # Adicionei o ORDER BY que você tinha comentado
-            cursor.execute("SELECT id, nome, quantidade FROM estoque ORDER BY nome ASC") 
-            registros = cursor.fetchall()
-
-            text_estoque.delete("1.0", tk.END)
-
-            if registros:
-                text_estoque.insert(tk.END, f"{'ID':<5} {'Produto':<30} {'Qtd':<10}\n")
-                text_estoque.insert(tk.END, "-"*50 + "\n")
-                
-                for row in registros:
-                    # [0]=id, [1]=nome, [2]=quantidade (float/decimal)
-                    # Formata a quantidade para exibir com 2 casas decimais
-                    text_estoque.insert(tk.END, f"{row[0]:<5} {row[1]:<30} {row[2]:<10.2f}\n")
-            else:
-                text_estoque.insert(tk.END, "Nenhum produto cadastrado no estoque.\n")
-        
-        except Exception as e:
-            messagebox.showerror("Erro de Banco de Dados", f"Erro ao carregar estoque: {e}", parent=janela_consulta)
-            
-        finally:
-            # --- MUDANÇA 3: Fechar Conexão ---
-            if cursor:
-                cursor.close()
-            if conexao:
-                conexao.close()
-
+    # ESQUERDA (LISTA)
+    tk.Label(frame_esq, text="🔍 Pesquisar Produto", font=("Arial", 12, "bold")).pack(pady=5)
+    entry_busca = tk.Entry(frame_esq)
+    entry_busca.pack(fill="x", padx=5)
     
-    def apagar_produto():
-        try:
-            produto_id = int(entry_id.get())
-        except ValueError:
-            messagebox.showerror("Erro", "Digite um ID válido!", parent=janela_consulta)
-            return
-
-        # --- MUDANÇA 2: Estrutura de Conexão ---
-        conexao = None
-        cursor = None
-        try:
-            conexao = banco.conectar()
-            if not conexao:
-                messagebox.showerror("Erro de Conexão", "Não foi possível conectar ao banco de dados MySQL.", parent=janela_consulta)
-                return
-                
-            cursor = conexao.cursor()
-
-            # --- MUDANÇA 4: Placeholder '?' para '%s' ---
-            cursor.execute("SELECT id FROM estoque WHERE id = %s", (produto_id,))
-            produto = cursor.fetchone()
-            if not produto:
-                messagebox.showerror("Erro", "Produto não encontrado!", parent=janela_consulta)
-                return 
-
-            # --- MUDANÇA 4: Placeholder '?' para '%s' ---
-            cursor.execute("DELETE FROM estoque WHERE id = %s", (produto_id,))
-            conexao.commit() 
-
-            messagebox.showinfo("Sucesso", f"Produto ID {produto_id} apagado com sucesso!", parent=janela_consulta)
-            carregar_estoque()  # Atualiza a lista
-        
-        except Exception as e:
-            messagebox.showerror("Erro de Banco de Dados", f"Erro ao apagar produto: {e}", parent=janela_consulta)
-            
-        finally:
-            # --- MUDANÇA 3: Fechar Conexão ---
-            if cursor:
-                cursor.close()
-            if conexao:
-                conexao.close()
-
-    def sair():
-        janela_consulta.destroy()
-
-    # ================= Janela ==================
-    # (Nenhuma mudança aqui, a interface está perfeita)
-
-    btn_carregar = tk.Button(janela_consulta, text="Atualizar Estoque", command=carregar_estoque)
-    btn_carregar.pack(pady=10)
-
-    text_estoque = tk.Text(janela_consulta, height=15, width=70)
-    text_estoque.pack(pady=10)
-
-    frame_apagar = tk.Frame(janela_consulta)
-    frame_apagar.pack(pady=5)
-
-    lbl_id = tk.Label(frame_apagar, text="ID para apagar:")
-    lbl_id.pack(side=tk.LEFT, padx=5)
-
-    entry_id = tk.Entry(frame_apagar, width=10)
-    entry_id.pack(side=tk.LEFT, padx=5)
-
-    btn_apagar = tk.Button(frame_apagar, text="Apagar Produto", command=apagar_produto)
-    btn_apagar.pack(side=tk.LEFT, padx=5)
-
-    btn_sair = tk.Button(janela_consulta, text="Sair", command=sair)
-    btn_sair.pack(pady=5)
+    listbox = tk.Listbox(frame_esq, font=("Consolas", 10))
+    listbox.pack(fill="both", expand=True, padx=5, pady=5)
     
-    carregar_estoque()
+    tk.Button(frame_esq, text="Pesquisar", command=lambda: _pesquisar_logic(entry_busca, listbox)).pack(fill="x", padx=5)
+    entry_busca.bind('<Return>', lambda e: _pesquisar_logic(entry_busca, listbox))
+
+    # DIREITA (EDIÇÃO)
+    tk.Label(frame_dir, text="📝 Editar Produto", font=("Arial", 12, "bold")).pack(pady=10)
+    entradas = {}
+
+    tk.Label(frame_dir, text="ID:").pack(anchor="w", padx=10)
+    entradas['id'] = tk.Entry(frame_dir, bg="#eee"); entradas['id'].pack(fill="x", padx=10)
+    entradas['id'].config(state=tk.DISABLED)
+
+    tk.Label(frame_dir, text="Código:").pack(anchor="w", padx=10)
+    entradas['codigo'] = tk.Entry(frame_dir); entradas['codigo'].pack(fill="x", padx=10)
+
+    tk.Label(frame_dir, text="Nome:").pack(anchor="w", padx=10)
+    entradas['nome'] = tk.Entry(frame_dir); entradas['nome'].pack(fill="x", padx=10)
+
+    tk.Label(frame_dir, text="Quantidade:").pack(anchor="w", padx=10)
+    entradas['qtd'] = tk.Entry(frame_dir); entradas['qtd'].pack(fill="x", padx=10)
+
+    tk.Label(frame_dir, text="Status:").pack(anchor="w", padx=10)
+    entradas['status'] = ttk.Combobox(frame_dir, values=["Ativo", "Inativo"], state="readonly")
+    entradas['status'].pack(fill="x", padx=10)
+    
+    tk.Label(frame_dir, text="_________________").pack(pady=10)
+
+    tk.Button(frame_dir, text="💾 Salvar Alterações", fg="green", font=("Arial", 10, "bold"),
+              command=lambda: _salvar_edicao(entradas, listbox, entry_busca)).pack(fill="x", padx=10, pady=5)
+
+    tk.Button(frame_dir, text="🗑️ Excluir Item", fg="red",
+              command=lambda: _excluir_produto(entradas, listbox, entry_busca)).pack(fill="x", padx=10, pady=5)
+
+    listbox.bind('<<ListboxSelect>>', lambda e: _selecionar_item(e, listbox, entradas))
+    tk.Button(janela, text="Sair", command=janela.destroy).pack(side="bottom", fill="x", padx=10, pady=5)
+
+    _pesquisar_logic(entry_busca, listbox)

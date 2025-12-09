@@ -1,0 +1,102 @@
+-- 1. Cria e seleciona o banco de dados
+CREATE DATABASE IF NOT EXISTS Pedido;
+USE Pedido;
+
+-- ---
+-- PASSO 1: CRIAR TABELAS "MÃE"
+-- ---
+
+-- Tabela de Estoque (AGORA COM CÓDIGO!)
+CREATE TABLE IF NOT EXISTS estoque (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    codigo VARCHAR(50),           -- <--- ADICIONADO AQUI!
+    Nome VARCHAR(255) NOT NULL UNIQUE,
+    Quantidade DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    DataCadastro DATE DEFAULT (CURRENT_DATE)
+);
+
+-- Tabela de Usuários
+CREATE TABLE IF NOT EXISTS usuarios (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL, 
+    nivel VARCHAR(20) DEFAULT 'vendedor'
+);
+
+-- Tabela de Clientes
+CREATE TABLE IF NOT EXISTS clientes (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nome VARCHAR(255) NOT NULL UNIQUE,
+    telefone VARCHAR(20),
+    email VARCHAR(100)
+);
+
+-- Tabela de Fornecedores
+CREATE TABLE IF NOT EXISTS fornecedores (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    nome VARCHAR(255) NOT NULL UNIQUE,
+    contato VARCHAR(100)
+);
+
+-- ---
+-- PASSO 2: CRIAR TABELAS "FILHAS"
+-- ---
+
+CREATE TABLE IF NOT EXISTS saidas (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    estoque_id INT NOT NULL, 
+    cliente_id INT NOT NULL, 
+    usuario_id INT NOT NULL, 
+    Quantidade DECIMAL(10, 2) NOT NULL,
+    DataSaida DATE DEFAULT (CURRENT_DATE),
+    
+    FOREIGN KEY (estoque_id) REFERENCES estoque(id),
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+);
+
+CREATE TABLE IF NOT EXISTS entradas (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    estoque_id INT NOT NULL,
+    fornecedor_id INT,
+    usuario_id INT NOT NULL,
+    Quantidade DECIMAL(10, 2) NOT NULL,
+    DataEntrada DATE DEFAULT (CURRENT_DATE),
+    
+    FOREIGN KEY (estoque_id) REFERENCES estoque(id),
+    FOREIGN KEY (fornecedor_id) REFERENCES fornecedores(id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+);
+
+CREATE TABLE IF NOT EXISTS consignado (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    estoque_id INT NOT NULL,    
+    fornecedor_id INT NOT NULL, 
+    Quantidade DECIMAL(10, 2) NOT NULL,
+    Valor DECIMAL(10, 2) NOT NULL,
+    DataChegada DATE DEFAULT (CURRENT_DATE),
+    DataColeta DATE DEFAULT NULL,     
+    
+    FOREIGN KEY (estoque_id) REFERENCES estoque(id),
+    FOREIGN KEY (fornecedor_id) REFERENCES fornecedores(id)
+);
+
+CREATE TABLE IF NOT EXISTS consignado_usos (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    estoque_id INT NOT NULL,
+    fornecedor_id INT NOT NULL,
+    usuario_id INT NOT NULL,
+    QuantidadeUsada DECIMAL(10, 2) NOT NULL,
+    ValorUnitario DECIMAL(10, 2) NOT NULL,
+    DataUso DATE DEFAULT (CURRENT_DATE),
+    
+    FOREIGN KEY (estoque_id) REFERENCES estoque(id),
+    FOREIGN KEY (fornecedor_id) REFERENCES fornecedores(id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+);
+
+USE Pedido;
+
+-- Adiciona a coluna status, por padrão todo mundo nasce 'Ativo'
+ALTER TABLE estoque 
+ADD COLUMN status VARCHAR(10) NOT NULL DEFAULT 'Ativo';

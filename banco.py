@@ -1,27 +1,31 @@
 import mysql.connector
 from mysql.connector import errorcode
-import os # Importei o OS, apesar de não o estarmos a usar agora
+import tkinter as tk
+from tkinter import simpledialog, messagebox
 
-# ---
-# CONFIGURE OS SEUS DADOS AQUI
-# ---
+# --- CONFIGURAÇÕES PADRÃO ---
+# Esta senha será tentada primeiro. Se falhar, o sistema pede a nova.
 DB_CONFIG = {
     'user': 'root',
-    'password': 'root123', # <-- MUDE ISTO
-    'host': '127.0.0.1',           # (Pode ser 'localhost')
-    'database': 'Pedido',          # (O nome do seu banco)
+    'password': 'root123', 
+    'host': '127.0.0.1',
+    'database': 'Pedido',
     'raise_on_warnings': True
 }
 
-# (O script SQL que criámos, guardado aqui para a inicialização)
+# --- DEFINIÇÃO DAS TABELAS (Schema Completo e Atualizado) ---
 TABLES = {}
+
 TABLES['estoque'] = """
     CREATE TABLE IF NOT EXISTS estoque (
         id INT PRIMARY KEY AUTO_INCREMENT,
+        codigo VARCHAR(50), 
         Nome VARCHAR(255) NOT NULL UNIQUE,
+        status VARCHAR(10) NOT NULL DEFAULT 'Ativo',
         Quantidade DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
         DataCadastro DATE DEFAULT (CURRENT_DATE)
     )"""
+
 TABLES['usuarios'] = """
     CREATE TABLE IF NOT EXISTS usuarios (
         id INT PRIMARY KEY AUTO_INCREMENT,
@@ -29,6 +33,7 @@ TABLES['usuarios'] = """
         password_hash VARCHAR(255) NOT NULL, 
         nivel VARCHAR(20) DEFAULT 'vendedor'
     )"""
+
 TABLES['clientes'] = """
     CREATE TABLE IF NOT EXISTS clientes (
         id INT PRIMARY KEY AUTO_INCREMENT,
@@ -36,12 +41,14 @@ TABLES['clientes'] = """
         telefone VARCHAR(20),
         email VARCHAR(100)
     )"""
+
 TABLES['fornecedores'] = """
     CREATE TABLE IF NOT EXISTS fornecedores (
         id INT PRIMARY KEY AUTO_INCREMENT,
         nome VARCHAR(255) NOT NULL UNIQUE,
         contato VARCHAR(100)
     )"""
+
 TABLES['saidas'] = """
     CREATE TABLE IF NOT EXISTS saidas (
         id INT PRIMARY KEY AUTO_INCREMENT,
@@ -54,6 +61,7 @@ TABLES['saidas'] = """
         FOREIGN KEY (cliente_id) REFERENCES clientes(id),
         FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
     )"""
+
 TABLES['entradas'] = """
     CREATE TABLE IF NOT EXISTS entradas (
         id INT PRIMARY KEY AUTO_INCREMENT,
@@ -66,6 +74,7 @@ TABLES['entradas'] = """
         FOREIGN KEY (fornecedor_id) REFERENCES fornecedores(id),
         FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
     )"""
+
 TABLES['consignado'] = """
     CREATE TABLE IF NOT EXISTS consignado (
         id INT PRIMARY KEY AUTO_INCREMENT,
@@ -78,6 +87,7 @@ TABLES['consignado'] = """
         FOREIGN KEY (estoque_id) REFERENCES estoque(id),
         FOREIGN KEY (fornecedor_id) REFERENCES fornecedores(id)
     )"""
+
 TABLES['consignado_usos'] = """
     CREATE TABLE IF NOT EXISTS consignado_usos (
         id INT PRIMARY KEY AUTO_INCREMENT,
@@ -92,67 +102,110 @@ TABLES['consignado_usos'] = """
         FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
     )"""
 
+# --- FUNÇÃO AUXILIAR: PEDIR SENHA ---
+def _pedir_senha_usuario():
+    """Abre uma janela popup pedindo a senha correta."""
+    root = tk.Tk()
+    root.withdraw() # Esconde a janela principal cinza
+    
+    senha = simpledialog.askstring(
+        "Erro de Conexão MySQL", 
+        "A senha do banco de dados está incorreta ou mudou.\n\nPor favor, digite a senha do MySQL deste computador:",
+        show='*' # Mostra asteriscos em vez da senha
+    )
+    root.destroy()
+    return senha
 
+# --- CONEXÃO INTELIGENTE ---
 def conectar():
-    """Conecta ao servidor MySQL e retorna o objeto de conexão."""
-    try:
-        conexao = mysql.connector.connect(**DB_CONFIG)
-        return conexao
-    except mysql.connector.Error as err:
-        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-            print("Erro: Nome de utilizador ou palavra-passe errada.")
-        elif err.errno == errorcode.ER_BAD_DB_ERROR:
-            print(f"Erro: A base de dados '{DB_CONFIG['database']}' não existe.")
-        else:
-            print(f"Ocorreu um erro: {err}")
-        return None # Retorna None se a conexão falhar
+    global DB_CONFIG
+    tentativas = 0
+    
+    while tentativas < 3: # Tenta no máximo 3 vezes para não travar
+        try:
+            conexao = mysql.connector.connect(**DB_CONFIG)
+            return conexao
+        except mysql.connector.Error as err:
+            if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+                # Se a senha estiver errada, pede ao usuário
+                nova_senha = _pedir_senha_usuario()
+                if nova_senha is not None:
+                    DB_CONFIG['password'] = nova_senha # Atualiza a configuração global
+                    tentativas += 1
+                    continue # Tenta de novo com a nova senha
+                else:
+                    return None # Usuário cancelou
+            else:
+                print(f"Erro de Conexão: {err}")
+                return None
+    return None
 
 def inicializar_banco():
-    """
-    Conecta ao MySQL e executa o script de criação de tabelas.
-    Isto é chamado APENAS UMA VEZ pelo menu.py.
-    """
+    global DB_CONFIG
     conexao = None
     cursor = None
+    
+    # 1. Tenta conectar ao Servidor (sem banco específico) para criar o banco
+    while True:
+        try:
+            db_sem_db = DB_CONFIG.copy()
+            db_sem_db.pop('database', None)
+            
+            conexao = mysql.connector.connect(**db_sem_db)
+            cursor = conexao.cursor()
+            
+            # Se conectou, sai do loop
+            break
+            
+        except mysql.connector.Error as err:
+            if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+                nova_senha = _pedir_senha_usuario()
+                if nova_senha is not None:
+                    DB_CONFIG['password'] = nova_senha # Atualiza para o futuro
+                    continue # Tenta de novo
+                else:
+                    messagebox.showerror("Erro Fatal", "Não foi possível conectar ao MySQL. O programa será fechado.")
+                    return # Sai da função
+            else:
+                messagebox.showerror("Erro", f"Erro ao conectar ao servidor MySQL: {err}")
+                return
+
+    # 2. Cria o Banco e as Tabelas
     try:
-        # Tenta conectar-se ao servidor
-        # (mas não a uma base de dados específica ainda)
-        db_sem_db = DB_CONFIG.copy()
-        db_sem_db.pop('database', None)
-        
-        conexao = mysql.connector.connect(**db_sem_db)
-        cursor = conexao.cursor()
-        
-        # Tenta criar o banco de dados
         try:
             cursor.execute(f"CREATE DATABASE {DB_CONFIG['database']} DEFAULT CHARACTER SET 'utf8'")
             print(f"Base de dados '{DB_CONFIG['database']}' criada.")
         except mysql.connector.Error as err:
-            # Se der erro 1007, a base de dados já existe, o que é bom
             if err.errno == errorcode.ER_DB_CREATE_EXISTS:
                 print(f"Base de dados '{DB_CONFIG['database']}' já existe.")
             else:
                 raise err
         
-        # Agora, conecta-se à base de dados correta
+        # Conecta ao banco correto agora
         conexao.database = DB_CONFIG['database']
         
-        # Cria todas as tabelas na ordem
-        print("A verificar/criar tabelas...")
+        print("A verificar tabelas...")
         for nome, script in TABLES.items():
             try:
                 cursor.execute(script)
-                # print(f"Tabela '{nome}' verificada/criada.")
             except mysql.connector.Error as err:
                 print(f"Erro ao criar tabela '{nome}': {err}")
 
-        print("Base de dados pronta!")
+        # Verifica Usuário Admin
+        print("A verificar usuário padrão...")
+        cursor.execute("SELECT COUNT(id) FROM usuarios")
+        num_usuarios = cursor.fetchone()[0]
+        
+        if num_usuarios == 0:
+            print("Criando usuário 'admin'...")
+            cursor.execute("INSERT INTO usuarios (username, password_hash, nivel) VALUES ('admin', 'admin', 'admin')")
+            conexao.commit()
+        
+        print("Banco de dados pronto!")
 
     except mysql.connector.Error as err:
-        print(f"ERRO FATAL: Não foi possível ligar ao MySQL: {err}")
-        
+        print(f"ERRO FATAL NA INICIALIZAÇÃO: {err}")
+        messagebox.showerror("Erro Fatal", f"Erro ao criar tabelas: {err}")
     finally:
-        if cursor:
-            cursor.close()
-        if conexao:
-            conexao.close()
+        if cursor: cursor.close()
+        if conexao: conexao.close()
