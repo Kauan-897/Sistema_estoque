@@ -80,7 +80,7 @@ def consulta():
 # --- Configuração da Janela Principal ---
 janela = tk.Tk()
 janela.title("Menu Inicial com Barra Fixa")
-janela.geometry("800x500")
+janela.state('zoomed')
 
 # --- Criação da Barra Lateral Fixa (Frame) ---
 barra_lateral = tk.Frame(janela, bg="#f0f0f0", padx=10, pady=10)
