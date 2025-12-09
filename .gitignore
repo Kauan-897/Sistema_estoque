@@ -1,0 +1,31 @@
+# --- Python (Arquivos compilados que o computador gera sozinho) ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- Ambientes Virtuais (Bibliotecas instaladas) ---
+venv/
+env/
+.env
+
+# --- Banco de Dados Local (Antigos ou Backups) ---
+*.db
+*.sqlite3
+*.sql
+# (Opcional) Se não quiser subir CSVs de teste:
+# *.csv
+
+# --- Arquivos do Sistema Operacional (Lixo do Windows/Mac) ---
+.DS_Store
+Thumbs.db
+
+# --- Editor de Código (Configurações pessoais do VS Code) ---
+.vscode/
+.idea/
+
+# --- Logs de Erros ---
+*.log
+
+# --- Arquivo de Configuração de Variáveis de Ambiente ---
+.env

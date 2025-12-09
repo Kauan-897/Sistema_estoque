@@ -2,14 +2,19 @@ import mysql.connector
 from mysql.connector import errorcode
 import tkinter as tk
 from tkinter import simpledialog, messagebox
+import os
+from dotenv import load_dotenv 
+
+# Carrega as variáveis do arquivo .env
+load_dotenv()
 
 # --- CONFIGURAÇÕES PADRÃO ---
-# Esta senha será tentada primeiro. Se falhar, o sistema pede a nova.
+# O sistema tenta pegar do .env. Se não achar, usa um valor padrão vazio ou o que definir.
 DB_CONFIG = {
-    'user': 'root',
-    'password': 'root123', 
-    'host': '127.0.0.1',
-    'database': 'Pedido',
+    'user': os.getenv('DB_USER', 'root'),
+    'password': os.getenv('DB_PASSWORD', ''), # <--- AQUI A MÁGICA! Ele lê do arquivo oculto
+    'host': os.getenv('DB_HOST', '127.0.0.1'),
+    'database': os.getenv('DB_NAME', 'Pedido'),
     'raise_on_warnings': True
 }
 
