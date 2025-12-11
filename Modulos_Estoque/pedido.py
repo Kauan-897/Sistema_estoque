@@ -4,7 +4,9 @@ import banco
 import csv
 from decimal import Decimal, InvalidOperation
 
-# --- 1. FUNÇÃO PARA ABRIR E VALIDAR O CSV ---
+# =============================================================================
+# 1. FUNÇÃO PARA ABRIR E VALIDAR O CSV
+# =============================================================================
 def abrir_pedido_csv(janela_pai, memo_widget, botoes_frame, itens_pedido):
     
     memo_widget.config(state=tk.NORMAL)
@@ -58,7 +60,7 @@ def abrir_pedido_csv(janela_pai, memo_widget, botoes_frame, itens_pedido):
             cliente_id = res_cliente[0]
             memo_widget.insert(tk.END, f"Cliente: {cliente_nome} (ID: {cliente_id})\n")
             
-            # 2. Pula a Linha de Cabeçalho dos Itens (Linha 2: Item;Descritivo...)
+            # 2. Pula a Linha de Cabeçalho dos Itens
             next(leitor, None) 
             
             memo_widget.insert(tk.END, "-"*40 + "\nVerificando itens...\n")
@@ -66,28 +68,24 @@ def abrir_pedido_csv(janela_pai, memo_widget, botoes_frame, itens_pedido):
             itens_encontrados = 0
             itens_invalidos = 0
             
-            # 3. Lê os Produtos (Linha 3 em diante)
+            # 3. Lê os Produtos
             for linha in leitor:
-                # Verifica se a linha tem dados (pelo menos Item, Nome e Qtd)
                 if not linha or len(linha) < 3: continue
                 
-                # Formato: Item (0); Descritivo (1); Quantidade (2)
                 produto_nome = linha[1].strip()
-                quantidade_str = linha[2].strip().replace(',', '.') # Troca vírgula por ponto
+                quantidade_str = linha[2].strip().replace(',', '.')
                 
-                # Ignora linhas vazias ou sem nome
                 if not produto_nome: continue
 
                 try:
                     quantidade = Decimal(quantidade_str)
                     if quantidade <= 0: continue 
 
-                    # Busca no Banco
                     cursor.execute("SELECT id, quantidade, status FROM estoque WHERE nome = %s", (produto_nome,))
                     res_produto = cursor.fetchone()
 
                     if not res_produto:
-                        memo_widget.insert(tk.END, f" ERRO: '{produto_nome}' não cadastrado.\n")
+                        memo_widget.insert(tk.END, f" ❌ ERRO: '{produto_nome}' não cadastrado.\n")
                         itens_invalidos += 1
                         continue 
 
@@ -95,21 +93,18 @@ def abrir_pedido_csv(janela_pai, memo_widget, botoes_frame, itens_pedido):
                     stock_atual = res_produto[1]
                     status_atual = res_produto[2]
 
-                    # Valida Status
                     if status_atual == 'Inativo':
-                        memo_widget.insert(tk.END, f" BLOQUEADO: '{produto_nome}' está INATIVO.\n")
+                        memo_widget.insert(tk.END, f" ⛔ BLOQUEADO: '{produto_nome}' está INATIVO.\n")
                         itens_invalidos += 1
                         continue
 
-                    # Valida Estoque
                     if stock_atual < quantidade:
-                        memo_widget.insert(tk.END, f" FALTA ESTOQUE: '{produto_nome}'.\n")
+                        memo_widget.insert(tk.END, f" ⚠️ FALTA ESTOQUE: '{produto_nome}'.\n")
                         memo_widget.insert(tk.END, f"    (Pedido: {quantidade} / Disp: {stock_atual})\n")
                         itens_invalidos += 1
                         continue 
                     
-                    # Sucesso
-                    memo_widget.insert(tk.END, f" OK: {produto_nome} (Qtd: {quantidade})\n")
+                    memo_widget.insert(tk.END, f" ✅ OK: {produto_nome} (Qtd: {quantidade})\n")
                     itens_pedido.append({
                         'estoque_id': estoque_id,
                         'quantidade': quantidade,
@@ -120,7 +115,6 @@ def abrir_pedido_csv(janela_pai, memo_widget, botoes_frame, itens_pedido):
                     itens_encontrados += 1
                         
                 except (ValueError, InvalidOperation):
-                    # Ignora silenciosamente erros de conversão (ex: linhas em branco no final)
                     pass 
 
             memo_widget.insert(tk.END, "-"*40 + "\n")
@@ -143,7 +137,9 @@ def abrir_pedido_csv(janela_pai, memo_widget, botoes_frame, itens_pedido):
         if conexao: conexao.close()
         memo_widget.config(state=tk.DISABLED)
 
-# --- 2. FUNÇÃO PARA REGISTRAR SAÍDA ---
+# =============================================================================
+# 2. FUNÇÃO PARA REGISTRAR SAÍDA
+# =============================================================================
 def registrar_saida(itens_pedido, memo_widget, botoes_frame):
     if not itens_pedido: return
 
@@ -154,14 +150,12 @@ def registrar_saida(itens_pedido, memo_widget, botoes_frame):
         cursor = conexao.cursor()
         
         memo_widget.config(state=tk.NORMAL)
-        memo_widget.insert(tk.END, "\n>>> Processando Saída no Banco... <<<")
+        memo_widget.insert(tk.END, "\n>>> Processando Saída no Banco... <<<\n")
         
         for item in itens_pedido:
-            # Baixa de Estoque
             cursor.execute("UPDATE estoque SET quantidade = quantidade - %s WHERE id = %s", 
                           (item['quantidade'], item['estoque_id']))
             
-            # Registro de Saída
             cursor.execute("""
                 INSERT INTO saidas (estoque_id, cliente_id, usuario_id, Quantidade)
                 VALUES (%s, %s, %s, %s)
@@ -172,7 +166,7 @@ def registrar_saida(itens_pedido, memo_widget, botoes_frame):
         conexao.commit()
         
         messagebox.showinfo("Sucesso", "Saída registrada e estoque atualizado!")
-        memo_widget.insert(tk.END, "\nOPERAÇÃO CONCLUÍDA COM SUCESSO!\n")
+        memo_widget.insert(tk.END, "\n✔️ OPERAÇÃO CONCLUÍDA COM SUCESSO!\n")
         
         itens_pedido.clear()
         botoes_frame.pack_forget() 
@@ -189,12 +183,14 @@ def registrar_saida(itens_pedido, memo_widget, botoes_frame):
 def cancelar_pedido(itens_pedido, memo_widget, botoes_frame):
     itens_pedido.clear()
     memo_widget.config(state=tk.NORMAL)
-    memo_widget.insert(tk.END, "\nPedido cancelado.\n")
+    memo_widget.insert(tk.END, "\n❌ Pedido cancelado.\n")
     memo_widget.config(state=tk.DISABLED)
     botoes_frame.pack_forget() 
 
 
-# --- 3. JANELA PRINCIPAL (LAYOUT MELHORADO) ---
+# =============================================================================
+# 3. JANELA PRINCIPAL (POPUP)
+# =============================================================================
 def abrir_janela_pedidos(janela_principal):
     janela = tk.Toplevel(janela_principal)
     janela.title("Processamento de Pedidos (CSV)")
@@ -214,7 +210,7 @@ def abrir_janela_pedidos(janela_principal):
     frame_botoes = tk.Frame(janela, pady=10)
     frame_botoes.pack()
 
-    btn_csv = tk.Button(frame_botoes, text="1. Selecionar Arquivo CSV", font=("Arial", 11), bg="#e1f5fe",
+    btn_csv = tk.Button(frame_botoes, text="📂 1. Selecionar Arquivo CSV", font=("Arial", 11), bg="#e1f5fe",
                         command=lambda: abrir_pedido_csv(janela, memo_text, botoes_acao, itens_pedido))
     btn_csv.pack(side=tk.LEFT, padx=10, ipady=5)
 
@@ -231,23 +227,21 @@ def abrir_janela_pedidos(janela_principal):
     memo_text.pack(side=tk.LEFT, fill="both", expand=True)
     scroll.config(command=memo_text.yview)
 
-    # --- Botões de Ação (Aparecem só depois de validar) ---
+    # --- Botões de Ação (Começam Escondidos) ---
     botoes_acao = tk.Frame(janela, pady=10)
     botoes_acao.pack()
     
-    btn_confirmar = tk.Button(botoes_acao, text="CONFIRMAR SAÍDA", bg="#ccffcc", font=("Arial", 10, "bold"),
+    btn_confirmar = tk.Button(botoes_acao, text="✅ CONFIRMAR SAÍDA", bg="#ccffcc", fg="green", font=("Arial", 12, "bold"),
                               command=lambda: registrar_saida(itens_pedido, memo_text, botoes_acao))
     btn_confirmar.pack(side=tk.LEFT, padx=10)
     
-    btn_cancelar = tk.Button(botoes_acao, text="Cancelar", bg="#ffcccc", font=("Arial", 10),
+    btn_cancelar = tk.Button(botoes_acao, text="❌ Cancelar", bg="#ffcccc", font=("Arial", 10),
                              command=lambda: cancelar_pedido(itens_pedido, memo_text, botoes_acao))
     btn_cancelar.pack(side=tk.LEFT, padx=10)
-
-    btn_fechar = tk.Button(botoes_acao, text="Fechar", font=("Arial", 10), command=janela.destroy)
-    btn_fechar.pack(side=tk.LEFT, padx=10)
-
     
-    botoes_acao.pack_forget() # Começa escondido
+    botoes_acao.pack_forget() 
 
+    # --- Botão Fechar (SEMPRE VISÍVEL NO RODAPÉ) ---
+    tk.Button(janela, text="Fechar Janela", command=janela.destroy).pack(side="bottom", pady=10)
 
     janela.wait_window()

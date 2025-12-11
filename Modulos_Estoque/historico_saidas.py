@@ -150,19 +150,27 @@ def _exportar_csv(tree, nome_arquivo="relatorio"):
         messagebox.showerror("Erro", f"Erro ao salvar: {e}")
 
 # =============================================================================
-# JANELA PRINCIPAL
+# JANELA PRINCIPAL (EMBUTIDA NO MENU)
 # =============================================================================
-def abrir_janela_historico(janela_raiz):
-    janela = tk.Toplevel(janela_raiz)
-    janela.title("Histórico de Movimentações")
-    janela.geometry("1100x650")
+def abrir_janela_historico(parent):
+    # Cria o Frame Principal
+    frame_total = tk.Frame(parent, bg="white")
+    frame_total.pack(fill="both", expand=True)
+
+    # Título
+    tk.Label(frame_total, text="Histórico de Movimentações", font=("Arial", 16, "bold"), bg="white", fg="#444").pack(pady=15)
     
     # --- SISTEMA DE ABAS ---
-    abas = ttk.Notebook(janela)
-    abas.pack(fill="both", expand=True, padx=10, pady=10)
+    # Estilo para deixar as abas bonitas no fundo branco
+    style = ttk.Style()
+    style.configure("TNotebook", background="white")
+    style.configure("TFrame", background="white")
+
+    abas = ttk.Notebook(frame_total)
+    abas.pack(fill="both", expand=True, padx=20, pady=10)
     
-    tab1 = tk.Frame(abas)
-    tab2 = tk.Frame(abas)
+    tab1 = tk.Frame(abas, bg="white")
+    tab2 = tk.Frame(abas, bg="white")
     
     abas.add(tab1, text="  1. Saídas Gerais (Vendas)  ")
     abas.add(tab2, text="  2. Histórico Consignado (Compras/Uso)  ")
@@ -170,23 +178,26 @@ def abrir_janela_historico(janela_raiz):
     # =========================================================================
     # CONTEÚDO DA ABA 1: SAÍDAS GERAIS
     # =========================================================================
-    frame_filtros1 = tk.Frame(tab1, bg="#f0f0f0", bd=2, relief="groove")
+    frame_filtros1 = tk.Frame(tab1, bg="#f9f9f9", bd=1, relief="solid")
     frame_filtros1.pack(fill="x", padx=10, pady=10)
     
-    tk.Label(frame_filtros1, text="Cliente:", bg="#f0f0f0").pack(side="left", padx=5)
-    entry_cli1 = tk.Entry(frame_filtros1, width=20)
+    tk.Label(frame_filtros1, text="Cliente:", bg="#f9f9f9").pack(side="left", padx=10, pady=10)
+    entry_cli1 = tk.Entry(frame_filtros1, width=25)
     entry_cli1.pack(side="left", padx=5)
     
-    tk.Label(frame_filtros1, text="Produto:", bg="#f0f0f0").pack(side="left", padx=5)
-    entry_prod1 = tk.Entry(frame_filtros1, width=20)
+    tk.Label(frame_filtros1, text="Produto:", bg="#f9f9f9").pack(side="left", padx=10)
+    entry_prod1 = tk.Entry(frame_filtros1, width=25)
     entry_prod1.pack(side="left", padx=5)
     
     tk.Button(frame_filtros1, text="🔍 Pesquisar", bg="#e1f5fe",
-              command=lambda: _pesquisar_geral(tree1, entry_cli1, entry_prod1, lbl_total1)).pack(side="left", padx=15)
+              command=lambda: _pesquisar_geral(tree1, entry_cli1, entry_prod1, lbl_total1)).pack(side="left", padx=20)
 
-    # Lista 1
+    # Container da Lista 1 (Para scrollbar funcionar bem)
+    container_lista1 = tk.Frame(tab1, bg="white")
+    container_lista1.pack(fill="both", expand=True, padx=10)
+
     cols1 = ("ID", "Data", "Produto", "Qtd", "Cliente", "Vendedor")
-    tree1 = ttk.Treeview(tab1, columns=cols1, show="headings", height=15)
+    tree1 = ttk.Treeview(container_lista1, columns=cols1, show="headings", height=15)
     
     tree1.heading("ID", text="ID")
     tree1.heading("Data", text="Data")
@@ -196,40 +207,47 @@ def abrir_janela_historico(janela_raiz):
     tree1.heading("Vendedor", text="Vendedor")
     
     tree1.column("ID", width=50, anchor="center")
-    tree1.column("Data", width=90, anchor="center")
-    tree1.column("Produto", width=250)
+    tree1.column("Data", width=100, anchor="center")
+    tree1.column("Produto", width=300)
     tree1.column("Qtd", width=80, anchor="center")
     tree1.column("Cliente", width=200)
     
-    tree1.pack(fill="both", expand=True, padx=10)
+    scroll1 = ttk.Scrollbar(container_lista1, orient="vertical", command=tree1.yview)
+    tree1.configure(yscroll=scroll1.set)
+    
+    tree1.pack(side="left", fill="both", expand=True)
+    scroll1.pack(side="right", fill="y")
     
     # Footer 1
-    frame_foot1 = tk.Frame(tab1)
+    frame_foot1 = tk.Frame(tab1, bg="white")
     frame_foot1.pack(fill="x", padx=10, pady=10)
-    lbl_total1 = tk.Label(frame_foot1, text="Total: 0", font=("Arial", 10, "bold"))
+    lbl_total1 = tk.Label(frame_foot1, text="Total: 0", font=("Arial", 10, "bold"), bg="white")
     lbl_total1.pack(side="left")
-    tk.Button(frame_foot1, text="📂 CSV", command=lambda: _exportar_csv(tree1, "saidas_gerais")).pack(side="right")
+    tk.Button(frame_foot1, text="📂 Exportar CSV", bg="#ccffcc", command=lambda: _exportar_csv(tree1, "saidas_gerais")).pack(side="right")
 
     # =========================================================================
     # CONTEÚDO DA ABA 2: HISTÓRICO CONSIGNADO
     # =========================================================================
-    frame_filtros2 = tk.Frame(tab2, bg="#f0f0f0", bd=2, relief="groove")
+    frame_filtros2 = tk.Frame(tab2, bg="#f9f9f9", bd=1, relief="solid")
     frame_filtros2.pack(fill="x", padx=10, pady=10)
     
-    tk.Label(frame_filtros2, text="Fornecedor:", bg="#f0f0f0").pack(side="left", padx=5)
-    entry_forn2 = tk.Entry(frame_filtros2, width=20)
+    tk.Label(frame_filtros2, text="Fornecedor:", bg="#f9f9f9").pack(side="left", padx=10, pady=10)
+    entry_forn2 = tk.Entry(frame_filtros2, width=25)
     entry_forn2.pack(side="left", padx=5)
     
-    tk.Label(frame_filtros2, text="Produto:", bg="#f0f0f0").pack(side="left", padx=5)
-    entry_prod2 = tk.Entry(frame_filtros2, width=20)
+    tk.Label(frame_filtros2, text="Produto:", bg="#f9f9f9").pack(side="left", padx=10)
+    entry_prod2 = tk.Entry(frame_filtros2, width=25)
     entry_prod2.pack(side="left", padx=5)
     
     tk.Button(frame_filtros2, text="🔍 Pesquisar", bg="#e1f5fe",
-              command=lambda: _pesquisar_consignado(tree2, entry_forn2, entry_prod2, lbl_total2)).pack(side="left", padx=15)
+              command=lambda: _pesquisar_consignado(tree2, entry_forn2, entry_prod2, lbl_total2)).pack(side="left", padx=20)
 
-    # Lista 2
+    # Container da Lista 2
+    container_lista2 = tk.Frame(tab2, bg="white")
+    container_lista2.pack(fill="both", expand=True, padx=10)
+
     cols2 = ("ID", "Data", "Produto", "Fornecedor", "Qtd", "V. Unit", "V. Total", "Usuário")
-    tree2 = ttk.Treeview(tab2, columns=cols2, show="headings", height=15)
+    tree2 = ttk.Treeview(container_lista2, columns=cols2, show="headings", height=15)
     
     tree2.heading("ID", text="ID")
     tree2.heading("Data", text="Data Uso")
@@ -241,26 +259,25 @@ def abrir_janela_historico(janela_raiz):
     tree2.heading("Usuário", text="Quem Usou")
     
     tree2.column("ID", width=50, anchor="center")
-    tree2.column("Data", width=90, anchor="center")
-    tree2.column("Produto", width=200)
+    tree2.column("Data", width=100, anchor="center")
+    tree2.column("Produto", width=250)
     tree2.column("Fornecedor", width=150)
     tree2.column("Qtd", width=80, anchor="center")
     tree2.column("V. Unit", width=90, anchor="e")
     tree2.column("V. Total", width=100, anchor="e")
     
-    tree2.pack(fill="both", expand=True, padx=10)
+    scroll2 = ttk.Scrollbar(container_lista2, orient="vertical", command=tree2.yview)
+    tree2.configure(yscroll=scroll2.set)
+
+    tree2.pack(side="left", fill="both", expand=True)
+    scroll2.pack(side="right", fill="y")
     
     # Footer 2
-    frame_foot2 = tk.Frame(tab2)
+    frame_foot2 = tk.Frame(tab2, bg="white")
     frame_foot2.pack(fill="x", padx=10, pady=10)
-    lbl_total2 = tk.Label(frame_foot2, text="Total Devido: R$ 0.00", font=("Arial", 11, "bold"), fg="red")
+    lbl_total2 = tk.Label(frame_foot2, text="Total Devido: R$ 0.00", font=("Arial", 11, "bold"), fg="red", bg="white")
     lbl_total2.pack(side="left")
-    tk.Button(frame_foot2, text="📂 CSV", command=lambda: _exportar_csv(tree2, "uso_consignado")).pack(side="right")
-
-    # =========================================================================
-    # BOTÃO SAIR GERAL
-    # =========================================================================
-    tk.Button(janela, text="Fechar Histórico", command=janela.destroy).pack(side="bottom", fill="x", padx=10, pady=5)
+    tk.Button(frame_foot2, text="📂 Exportar CSV", bg="#ccffcc", command=lambda: _exportar_csv(tree2, "uso_consignado")).pack(side="right")
 
     # Inicialização
     entry_cli1.bind('<Return>', lambda e: _pesquisar_geral(tree1, entry_cli1, entry_prod1, lbl_total1))

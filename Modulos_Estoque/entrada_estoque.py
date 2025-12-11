@@ -4,10 +4,11 @@ import banco
 import csv
 from decimal import Decimal, InvalidOperation
 
-# --- 1. FUNÇÃO DE LÓGICA (ENTRADA MANUAL - CORRIGIDA) ---
-# --- 1. FUNÇÃO DE LÓGICA (ENTRADA MANUAL - VERSÃO SIMPLIFICADA) ---
+# =============================================================================
+# LÓGICA DE NEGÓCIO (Mantida igual, só copiando)
+# =============================================================================
+
 def _adicionar_stock_logic(memo_widget, entry_input, entry_qntd):
-    
     memo_widget.config(state=tk.NORMAL)
     memo_widget.delete('1.0', tk.END)
     
@@ -35,52 +36,40 @@ def _adicionar_stock_logic(memo_widget, entry_input, entry_qntd):
              memo_widget.insert(tk.END, "ERRO: Sem conexão com MySQL.")
              return
         
-        # Use buffered=True para evitar erros de leitura
         cursor = conexao.cursor(buffered=True)
-        
         memo_widget.insert(tk.END, f"Procurando por: '{termo_busca}'...\n")
 
-        # --- BUSCA EM DUAS ETAPAS (Mais segura) ---
         produto_encontrado = None
-
-        # 1. Tenta achar pelo CÓDIGO exato
         cursor.execute("SELECT id, nome, quantidade FROM estoque WHERE codigo = %s", (termo_busca,))
         produto_encontrado = cursor.fetchone()
 
-        # 2. Se não achou, tenta achar pelo NOME exato
         if not produto_encontrado:
             cursor.execute("SELECT id, nome, quantidade FROM estoque WHERE nome = %s", (termo_busca,))
             produto_encontrado = cursor.fetchone()
         
         if not produto_encontrado:
             memo_widget.insert(tk.END, f"ERRO: Item não encontrado no banco.\n")
-            memo_widget.insert(tk.END, f"Dica: Digite o nome ou código EXATO.")
         else:
             prod_id = produto_encontrado[0]
             prod_nome = produto_encontrado[1]
             stock_antigo = produto_encontrado[2]
             stock_novo = stock_antigo + quantidade
             
-            # Atualiza usando o ID
             cursor.execute("UPDATE estoque SET quantidade = quantidade + %s WHERE id = %s", (quantidade, prod_id))
             conexao.commit()
             
             memo_widget.insert(tk.END, f"SUCESSO: '{prod_nome}' atualizado!\n")
             memo_widget.insert(tk.END, f"  Estoque: {stock_antigo} -> {stock_novo}")
-            
             entry_qntd.delete(0, tk.END)
             
     except Exception as e:
         if conexao: conexao.rollback()
-        # Mostra o erro no Memo também para você ver sem precisar abrir o terminal
         memo_widget.insert(tk.END, f"\nERRO TÉCNICO: {e}") 
-        print(f"Erro detalhado no terminal: {e}")
     finally:
         if cursor: cursor.close()
         if conexao: conexao.close()
         memo_widget.config(state=tk.DISABLED)
 
-# --- 2. FUNÇÃO DE LÓGICA (ENTRADA VIA CSV) ---
 def _entrada_csv_logic(janela_pai, memo_widget):
     memo_widget.config(state=tk.NORMAL)
     memo_widget.delete('1.0', tk.END)
@@ -107,7 +96,6 @@ def _entrada_csv_logic(janela_pai, memo_widget):
              memo_widget.config(state=tk.DISABLED)
              return
         
-        # CORREÇÃO: buffered=True
         cursor = conexao.cursor(buffered=True)
 
         with open(caminho_arquivo, "r", encoding="latin-1") as arquivo:
@@ -129,7 +117,6 @@ def _entrada_csv_logic(janela_pai, memo_widget):
                 except (ValueError, InvalidOperation):
                     continue 
 
-                # Tenta achar pelo Código primeiro
                 prod_id = None
                 prod_nome_banco = None
                 
@@ -140,7 +127,6 @@ def _entrada_csv_logic(janela_pai, memo_widget):
                         prod_id = res[0]
                         prod_nome_banco = res[1]
 
-                # Se não achou, tenta pelo nome
                 if not prod_id and csv_nome:
                     cursor.execute("SELECT id, nome FROM estoque WHERE nome = %s", (csv_nome,))
                     res = cursor.fetchone()
@@ -171,8 +157,6 @@ def _entrada_csv_logic(janela_pai, memo_widget):
         if conexao: conexao.close()
         memo_widget.config(state=tk.DISABLED)
 
-
-# --- 3. FUNÇÃO PESQUISAR ---
 def _pesquisar_produto_logic(entry_busca, listbox_resultados):
     termo = entry_busca.get().strip()
     listbox_resultados.delete(0, tk.END)
@@ -182,7 +166,7 @@ def _pesquisar_produto_logic(entry_busca, listbox_resultados):
     try:
         conexao = banco.conectar()
         if not conexao: return
-        cursor = conexao.cursor(buffered=True) # buffered=True aqui também
+        cursor = conexao.cursor(buffered=True)
         
         sql = "SELECT codigo, nome, quantidade FROM estoque WHERE nome LIKE %s OR codigo LIKE %s ORDER BY nome ASC"
         termo_like = f"%{termo}%"
@@ -203,106 +187,108 @@ def _pesquisar_produto_logic(entry_busca, listbox_resultados):
         if cursor: cursor.close()
         if conexao: conexao.close()
 
-# --- 4. FUNÇÃO SELECIONAR ---
 def _selecionar_produto_evento(event, listbox_resultados, entry_nome):
     selecao = listbox_resultados.curselection()
     if not selecao: return
-    
     texto = listbox_resultados.get(selecao[0])
     if texto == "Nenhum produto encontrado.": return
 
     try:
-        # Formato: "[CODIGO] NOME (Atual: X)"
         parte1 = texto.split('] ', 1)[1] 
         nome_real = parte1.split(' (Atual:', 1)[0]
-        
         entry_nome.delete(0, tk.END)
         entry_nome.insert(0, nome_real.strip())
     except IndexError:
         pass 
 
 
-# --- 5. FUNÇÃO PRINCIPAL (JANELA) ---
-def abrir_janela_entrada(janela_raiz):
-    
-    janela_entrada = tk.Toplevel(janela_raiz)
-    janela_entrada.title("Entrada de Estoque")
-    janela_entrada.geometry("900x550")
-    
-    janela_entrada.transient(janela_raiz)
-    janela_entrada.grab_set()
+# =============================================================================
+# JANELA PRINCIPAL (AGORA É UM FRAME)
+# =============================================================================
+def abrir_janela_entrada(parent):
+    # Cria o frame principal que ocupará a área branca do menu
+    frame_total = tk.Frame(parent, bg="white")
+    frame_total.pack(fill="both", expand=True)
+
+    # Título
+    tk.Label(frame_total, text="Entrada de Estoque", font=("Arial", 16, "bold"), bg="white", fg="#28a745").pack(pady=15)
 
     # Layout
-    frame_esquerda = tk.Frame(janela_entrada)
-    frame_esquerda.pack(side=tk.LEFT, fill="both", expand=True, padx=10, pady=10)
-    frame_direita = tk.Frame(janela_entrada, relief="sunken", borderwidth=1)
-    frame_direita.pack(side=tk.RIGHT, fill="y", padx=10, pady=10)
-
-    # Lado Esquerdo
-    frame_manual = tk.Frame(frame_esquerda, relief="groove", borderwidth=2)
-    frame_manual.pack(fill="x", pady=5)
-
-    tk.Label(frame_manual, text="Entrada Manual", font=("Arial", 12, "bold")).pack(pady=5)
-    tk.Label(frame_manual, text="Nome ou Código do Item:").pack(anchor="w", padx=5)
+    frame_esquerda = tk.Frame(frame_total, bg="white")
+    frame_esquerda.pack(side=tk.LEFT, fill="both", expand=True, padx=20, pady=10)
     
-    entry_nome = tk.Entry(frame_manual, width=40, bg="#e6f7ff") 
-    entry_nome.pack(padx=5, pady=2, fill="x")
+    frame_direita = tk.Frame(frame_total, bg="#f9f9f9", relief="groove", borderwidth=2)
+    frame_direita.pack(side=tk.RIGHT, fill="y", padx=20, pady=10, ipadx=10)
 
-    tk.Label(frame_manual, text="Quantidade a Adicionar:").pack(anchor="w", padx=5)
-    entry_qntd = tk.Entry(frame_manual, width=15)
-    entry_qntd.pack(padx=5, pady=2, anchor="w") 
+    # --- LADO ESQUERDO: MANUAL E CSV ---
+    
+    # Bloco Manual
+    frame_manual = tk.Frame(frame_esquerda, bg="#f0fff4", relief="groove", borderwidth=1)
+    frame_manual.pack(fill="x", pady=10, ipady=10)
 
-    btn_adicionar = tk.Button(frame_manual, text="CONFIRMAR ENTRADA", fg="green", font=("Arial", 10, "bold"),
+    tk.Label(frame_manual, text="Entrada Manual", font=("Arial", 12, "bold"), bg="#f0fff4", fg="#28a745").pack(pady=5)
+    
+    tk.Label(frame_manual, text="Nome ou Código do Item:", bg="#f0fff4").pack(anchor="w", padx=10)
+    entry_nome = tk.Entry(frame_manual, width=40, bg="white") 
+    entry_nome.pack(padx=10, pady=2, fill="x")
+
+    tk.Label(frame_manual, text="Quantidade a Adicionar:", bg="#f0fff4").pack(anchor="w", padx=10)
+    entry_qntd = tk.Entry(frame_manual, width=15, bg="white")
+    entry_qntd.pack(padx=10, pady=2, anchor="w") 
+
+    btn_adicionar = tk.Button(frame_manual, text="CONFIRMAR ENTRADA", bg="#28a745", fg="white", font=("Arial", 10, "bold"),
                              command=lambda: _adicionar_stock_logic(log_text, entry_nome, entry_qntd))
-    btn_adicionar.pack(pady=10, fill="x", padx=5)
+    btn_adicionar.pack(pady=10, fill="x", padx=10)
     
-    # CSV Area
-    frame_csv = tk.Frame(frame_esquerda, relief="groove", borderwidth=2)
-    frame_csv.pack(fill="x", pady=10)
-    tk.Label(frame_csv, text="Entrada via CSV", font=("Arial", 12, "bold")).pack(pady=5)
-    btn_csv = tk.Button(frame_csv, text="Selecionar Arquivo CSV",
-                        command=lambda: _entrada_csv_logic(janela_entrada, log_text))
-    btn_csv.pack(padx=10, pady=10, fill='x')
+    # Bloco CSV
+    frame_csv = tk.Frame(frame_esquerda, bg="white", relief="groove", borderwidth=1)
+    frame_csv.pack(fill="x", pady=10, ipady=5)
+    
+    tk.Label(frame_csv, text="Entrada em Massa (CSV)", font=("Arial", 11, "bold"), bg="white").pack(pady=5)
+    btn_csv = tk.Button(frame_csv, text="📂 Selecionar Arquivo CSV", bg="#e8f5e9",
+                        command=lambda: _entrada_csv_logic(parent, log_text))
+    btn_csv.pack(padx=10, pady=5, fill='x')
 
     # Log Area
-    frame_log = tk.Frame(frame_esquerda)
+    frame_log = tk.Frame(frame_esquerda, bg="white")
     frame_log.pack(fill="both", expand=True)
+    tk.Label(frame_log, text="Log de Operações:", bg="white", font=("Arial", 9, "bold")).pack(anchor="w")
+    
     log_scrollbar = tk.Scrollbar(frame_log)
     log_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-    log_text = tk.Text(frame_log, height=5, width=40, yscrollcommand=log_scrollbar.set)
+    
+    log_text = tk.Text(frame_log, height=8, width=40, yscrollcommand=log_scrollbar.set, font=("Consolas", 9))
     log_text.pack(side=tk.LEFT, fill="both", expand=True)
     log_scrollbar.config(command=log_text.yview)
-    log_text.insert(tk.END, "Log do sistema...")
+    log_text.insert(tk.END, "Aguardando operação...")
     log_text.config(state=tk.DISABLED) 
 
-    # Lado Direito (Pesquisa)
-    tk.Label(frame_direita, text="🔍 Pesquisar Produto", font=("Arial", 11, "bold")).pack(pady=5)
-    tk.Label(frame_direita, text="Digite Nome ou Código:", font=("Arial", 8)).pack()
-    entry_busca = tk.Entry(frame_direita)
-    entry_busca.pack(fill="x", padx=5, pady=2)
+    # --- LADO DIREITO: PESQUISA ---
+    tk.Label(frame_direita, text="🔍 Pesquisar Produto", font=("Arial", 11, "bold"), bg="#f9f9f9").pack(pady=10)
+    
+    entry_busca = tk.Entry(frame_direita, font=("Arial", 11))
+    entry_busca.pack(fill="x", padx=10, pady=5)
     
     # Lista Resultados
     listbox_frame = tk.Frame(frame_direita)
-    listbox_frame.pack(fill="both", expand=True, padx=5, pady=5)
+    listbox_frame.pack(fill="both", expand=True, padx=10, pady=5)
+    
     scrollbar_lista = tk.Scrollbar(listbox_frame)
     scrollbar_lista.pack(side=tk.RIGHT, fill=tk.Y)
-    listbox_resultados = tk.Listbox(listbox_frame, width=35, height=20, yscrollcommand=scrollbar_lista.set)
+    
+    listbox_resultados = tk.Listbox(listbox_frame, width=35, height=20, yscrollcommand=scrollbar_lista.set, font=("Consolas", 10))
     listbox_resultados.pack(side=tk.LEFT, fill="both", expand=True)
     scrollbar_lista.config(command=listbox_resultados.yview)
 
+    # Botão Pesquisar
+    btn_pesquisar = tk.Button(frame_direita, text="Pesquisar", bg="#e1f5fe",
+                              command=lambda: _pesquisar_produto_logic(entry_busca, listbox_resultados))
+    btn_pesquisar.pack(fill="x", padx=10, pady=5)
+
     # Bindings
     entry_busca.bind('<Return>', lambda event: _pesquisar_produto_logic(entry_busca, listbox_resultados))
-    btn_pesquisar = tk.Button(frame_direita, text="Pesquisar", 
-                              command=lambda: _pesquisar_produto_logic(entry_busca, listbox_resultados))
-    btn_pesquisar.pack(fill="x", padx=5, pady=5)
-    
     listbox_resultados.bind('<<ListboxSelect>>', 
                             lambda event: _selecionar_produto_evento(event, listbox_resultados, entry_nome))
 
-    btn_fechar = tk.Button(janela_entrada, text="Fechar Janela", command=janela_entrada.destroy)
-    btn_fechar.pack(side="bottom", fill="x", padx=10, pady=10)
-
     # Inicia com lista vazia ou carrega tudo
     _pesquisar_produto_logic(entry_busca, listbox_resultados)
-    
-    janela_entrada.wait_window()

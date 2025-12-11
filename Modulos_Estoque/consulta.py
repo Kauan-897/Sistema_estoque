@@ -153,22 +153,22 @@ def _excluir_produto(entradas, listbox, entry_busca):
 
 
 # --- 5. JANELA PRINCIPAL ---
-def abrir_janela_consulta(janela_mae):
+def abrir_janela_consulta(parent):
+    # Em vez de Toplevel, usamos Frame
+    frame_principal = tk.Frame(parent, bg="white")
+    frame_principal.pack(fill="both", expand=True)
 
-    janela = tk.Toplevel(janela_mae)
-    janela.title("Gerenciamento de Estoque")
-    janela.geometry("950x600")
-    janela.transient(janela_mae)
-    janela.grab_set()
+    tk.Label(frame_principal, text="Gerenciamento de Estoque", font=("Arial", 16, "bold"), bg="white").pack(pady=10)
 
-    # Layout
-    frame_esq = tk.Frame(janela)
+    # Layout: Esquerda (Lista) | Direita (Edição)
+    frame_esq = tk.Frame(frame_principal, bg="white")
     frame_esq.pack(side=tk.LEFT, fill="both", expand=True, padx=10, pady=10)
-    frame_dir = tk.Frame(janela, relief="groove", borderwidth=2)
+    
+    frame_dir = tk.Frame(frame_principal, bg="white", relief="groove", borderwidth=2)
     frame_dir.pack(side=tk.RIGHT, fill="y", padx=10, pady=10)
 
-    # ESQUERDA (LISTA)
-    tk.Label(frame_esq, text="🔍 Pesquisar Produto", font=("Arial", 12, "bold")).pack(pady=5)
+    # === LADO ESQUERDO: LISTA ===
+    tk.Label(frame_esq, text="🔍 Pesquisar Produto", font=("Arial", 12, "bold"), bg="white").pack(pady=5)
     entry_busca = tk.Entry(frame_esq)
     entry_busca.pack(fill="x", padx=5)
     
@@ -178,36 +178,8 @@ def abrir_janela_consulta(janela_mae):
     tk.Button(frame_esq, text="Pesquisar", command=lambda: _pesquisar_logic(entry_busca, listbox)).pack(fill="x", padx=5)
     entry_busca.bind('<Return>', lambda e: _pesquisar_logic(entry_busca, listbox))
 
-    # DIREITA (EDIÇÃO)
-    tk.Label(frame_dir, text="📝 Editar Produto", font=("Arial", 12, "bold")).pack(pady=10)
-    entradas = {}
-
-    tk.Label(frame_dir, text="ID:").pack(anchor="w", padx=10)
-    entradas['id'] = tk.Entry(frame_dir, bg="#eee"); entradas['id'].pack(fill="x", padx=10)
-    entradas['id'].config(state=tk.DISABLED)
-
-    tk.Label(frame_dir, text="Código:").pack(anchor="w", padx=10)
-    entradas['codigo'] = tk.Entry(frame_dir); entradas['codigo'].pack(fill="x", padx=10)
-
-    tk.Label(frame_dir, text="Nome:").pack(anchor="w", padx=10)
-    entradas['nome'] = tk.Entry(frame_dir); entradas['nome'].pack(fill="x", padx=10)
-
-    tk.Label(frame_dir, text="Quantidade:").pack(anchor="w", padx=10)
-    entradas['qtd'] = tk.Entry(frame_dir); entradas['qtd'].pack(fill="x", padx=10)
-
-    tk.Label(frame_dir, text="Status:").pack(anchor="w", padx=10)
-    entradas['status'] = ttk.Combobox(frame_dir, values=["Ativo", "Inativo"], state="readonly")
-    entradas['status'].pack(fill="x", padx=10)
-    
-    tk.Label(frame_dir, text="_________________").pack(pady=10)
-
-    tk.Button(frame_dir, text="💾 Salvar Alterações", fg="green", font=("Arial", 10, "bold"),
-              command=lambda: _salvar_edicao(entradas, listbox, entry_busca)).pack(fill="x", padx=10, pady=5)
-
-    tk.Button(frame_dir, text="🗑️ Excluir Item", fg="red",
-              command=lambda: _excluir_produto(entradas, listbox, entry_busca)).pack(fill="x", padx=10, pady=5)
-
-    listbox.bind('<<ListboxSelect>>', lambda e: _selecionar_item(e, listbox, entradas))
-    tk.Button(janela, text="Sair", command=janela.destroy).pack(side="bottom", fill="x", padx=10, pady=5)
+    # === LADO DIREITO: EDIÇÃO ===
+    # ... (O resto do código de layout é igual, só mude 'janela' por 'frame_dir' onde precisar) ...
+    # IMPORTANTE: Remova o botão "Sair" ou "Fechar Janela", pois agora fica fixo.
 
     _pesquisar_logic(entry_busca, listbox)

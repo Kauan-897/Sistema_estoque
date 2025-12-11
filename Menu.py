@@ -2,144 +2,144 @@ import tkinter as tk
 from tkinter import messagebox 
 import banco 
 
-# --- Inicialização do Banco de Dados ---
+# --- Inicialização do Banco ---
 try:
     banco.inicializar_banco()
 except Exception as e:
-    messagebox.showerror("Erro Fatal", f"Erro ao iniciar banco de dados:\n{e}")
+    messagebox.showerror("Erro Fatal", f"Erro ao iniciar banco:\n{e}")
 
-# --- Funções do Menu ---
+# =============================================================================
+# SISTEMA DE NAVEGAÇÃO (SINGLE PAGE APPLICATION)
+# =============================================================================
+def mostrar_tela(funcao_modulo):
+    """
+    1. Limpa a área branca (direita).
+    2. Executa a função do módulo passando a área limpa como 'parent'.
+    """
+    # Limpa tudo o que estiver na área de conteúdo
+    for widget in area_conteudo.winfo_children():
+        widget.destroy()
+    
+    # Chama a função do módulo
+    try:
+        funcao_modulo(area_conteudo)
+    except Exception as e:
+        messagebox.showerror("Erro", f"Erro ao carregar módulo:\n{e}")
+        mostrar_logo() # Se der erro, volta para o início
+
+def mostrar_logo():
+    """Restaura a tela inicial com o logo."""
+    for widget in area_conteudo.winfo_children():
+        widget.destroy()
+        
+    try:
+        global logo_redimensionada 
+        logo_original = tk.PhotoImage(file="logo.png")
+        logo_redimensionada = logo_original.subsample(4, 4)
+        
+        lbl = tk.Label(area_conteudo, image=logo_redimensionada, bg="white")
+        lbl.image = logo_redimensionada 
+        lbl.pack(expand=True)
+    except tk.TclError:
+        tk.Label(area_conteudo, text="SISTEMA DE GESTÃO", font=("Arial", 30, "bold"), bg="white", fg="#333").pack(expand=True)
+
 def sair():
-    janela.quit()
+    if messagebox.askyesno("Sair", "Deseja realmente sair do sistema?"):
+        janela.quit()
 
-# === MÓDULO: CADASTRO ===
+# =============================================================================
+# FUNÇÕES DE CHAMADA DOS MÓDULOS (Wrappers)
+# =============================================================================
 
-def cadastrar_item():
-    try:
-        from Modulos_Cadastro import cadastro
-        cadastro.abrir_janela_cadastro(janela)
-    except Exception as e:
-        messagebox.showerror("Erro", f"Erro ao abrir cadastro de itens:\n{e}")
+# --- CADASTROS ---
+def ir_cadastro_item():
+    from Modulos_Cadastro import cadastro
+    # O módulo deve ter a função: abrir_janela_cadastro(parent)
+    mostrar_tela(cadastro.abrir_janela_cadastro)
 
-def cadastrar_cliente():
-    try:
-        from Modulos_Cadastro import cadastro_clientes 
-        cadastro_clientes.abrir_janela_cadastro_cliente(janela)
-    except Exception as e:
-        messagebox.showerror("Erro", f"Erro ao abrir cadastro de clientes:\n{e}")
+def ir_cadastro_cliente():
+    from Modulos_Cadastro import cadastro_clientes 
+    mostrar_tela(cadastro_clientes.abrir_janela_cadastro_cliente)
 
-def cadastrar_fornecedor():
-    try:
-        from Modulos_Cadastro import cadastro_fornecedores
-        cadastro_fornecedores.abrir_janela_fornecedores(janela)
-    except Exception as e:
-        messagebox.showerror("Erro", f"Erro ao abrir fornecedores:\n{e}")
+def ir_cadastro_fornecedor():
+    from Modulos_Cadastro import cadastro_fornecedores
+    mostrar_tela(cadastro_fornecedores.abrir_janela_fornecedores)
 
-# === MÓDULO: ESTOQUE ===
+# --- ESTOQUE ---
+def ir_entrada():
+    from Modulos_Estoque import entrada_estoque
+    mostrar_tela(entrada_estoque.abrir_janela_entrada)
 
-def entrada_estoque():
-    try:
-        from Modulos_Estoque import entrada_estoque
-        entrada_estoque.abrir_janela_entrada(janela)
-    except Exception as e:
-        messagebox.showerror("Erro", f"Erro ao abrir entrada:\n{e}")
+def ir_saida():
+    from Modulos_Estoque import saida_estoque 
+    mostrar_tela(saida_estoque.abrir_janela_saida)
 
-def saida_estoque():
-    try:
-        from Modulos_Estoque import saida_estoque 
-        saida_estoque.abrir_janela_saida(janela) 
-    except Exception as e:
-        messagebox.showerror("Erro", f"Erro ao abrir saída:\n{e}")
+def ir_consignado():
+    from Modulos_Estoque import consignado
+    mostrar_tela(consignado.abrir_janela_consignado)
 
-def abrir_consignado():
-    try:
-        from Modulos_Estoque import consignado
-        consignado.abrir_janela_consignado(janela)
-    except Exception as e:
-        messagebox.showerror("Erro", f"Erro ao abrir consignado:\n{e}")
+# --- GESTÃO ---
+def ir_consulta():
+    from Modulos_Estoque import consulta 
+    mostrar_tela(consulta.abrir_janela_consulta)
 
-def consulta_estoque():
-    try:
-        from Modulos_Estoque import consulta 
-        consulta.abrir_janela_consulta(janela)
-    except Exception as e:
-        messagebox.showerror("Erro", f"Erro ao abrir consulta:\n{e}")
+def ir_historico():
+    from Modulos_Estoque import historico_saidas 
+    mostrar_tela(historico_saidas.abrir_janela_historico)
 
-def historico():
-    try:
-        from Modulos_Estoque import historico_saidas 
-        historico_saidas.abrir_janela_historico(janela)
-    except Exception as e:
-        messagebox.showerror("Erro", f"Erro ao abrir histórico:\n{e}")
-
-def compra(): # Placeholder se tiver um modulo de compra
-    messagebox.showinfo("Em Breve", "Módulo de Pedido de Compra em desenvolvimento.")
-    # try:
-    #     from Modulos_Estoque import compra   
-    #     compra.abrir_janela_compra(janela)
-    # except Exception as e: ...
+def ir_compra():
+    messagebox.showinfo("Em Breve", "Módulo de Compras em desenvolvimento.")
 
 
-# --- Configuração da Janela Principal ---
+# =============================================================================
+# INTERFACE PRINCIPAL
+# =============================================================================
 janela = tk.Tk()
-janela.title("Menu Inicial - Sistema de Gestão")
-janela.state('zoomed') # Maximiza a janela
+janela.title("Sistema Integrado de Gestão")
+janela.state('zoomed') # Tela cheia
 
-# --- Criação da Barra Lateral Fixa (Frame) ---
-barra_lateral = tk.Frame(janela, bg="#f0f0f0", padx=10, pady=10)
+# --- Layout: Barra Lateral (Esquerda) + Conteúdo (Direita) ---
+barra_lateral = tk.Frame(janela, bg="#f0f0f0", width=250)
 barra_lateral.pack(side="left", fill="y")
+# Impede que a barra lateral encolha se o texto for pequeno
+barra_lateral.pack_propagate(False) 
 
-# --- Criação da Área de Conteúdo Principal ---
 area_conteudo = tk.Frame(janela, bg="white")
 area_conteudo.pack(side="right", fill="both", expand=True)
 
+# --- BOTÕES DO MENU ---
+tk.Label(barra_lateral, text="MENU PRINCIPAL", font=("Arial", 14, "bold"), bg="#f0f0f0", fg="#444").pack(pady=(20, 20))
 
-# --- Adicionando os Botões à BARRA LATERAL ---
-tk.Label(barra_lateral, text="MENU PRINCIPAL", font=("Arial", 14, "bold"), bg="#f0f0f0", fg="#333").pack(pady=(10, 20))
+# Estilo padrão dos botões
+btn_style = {'bg': '#e0e0e0', 'activebackground': '#d0d0d0', 'relief': 'flat', 'height': 2}
 
-# Grupo Cadastro
-tk.Label(barra_lateral, text="Cadastros", font=("Arial", 10, "bold"), bg="#f0f0f0", fg="gray").pack(anchor="w")
-tk.Button(barra_lateral, text="📦 Cadastrar Itens", command=cadastrar_item).pack(fill='x', pady=2)
-tk.Button(barra_lateral, text="👥 Cadastrar Clientes", command=cadastrar_cliente).pack(fill='x', pady=2)
-tk.Button(barra_lateral, text="🏭 Cadastrar Fornecedores", command=cadastrar_fornecedor).pack(fill='x', pady=2)
+# Grupo Cadastros
+tk.Label(barra_lateral, text="CADASTROS", font=("Arial", 9, "bold"), bg="#f0f0f0", fg="gray").pack(anchor="w", padx=10)
+tk.Button(barra_lateral, text="📦  Produtos", command=ir_cadastro_item, **btn_style).pack(fill='x', pady=1, padx=5)
+tk.Button(barra_lateral, text="👥  Clientes", command=ir_cadastro_cliente, **btn_style).pack(fill='x', pady=1, padx=5)
+tk.Button(barra_lateral, text="🏭  Fornecedores", command=ir_cadastro_fornecedor, **btn_style).pack(fill='x', pady=1, padx=5)
 
-# Separador visual
-tk.Frame(barra_lateral, height=2, bg="#ccc").pack(fill='x', pady=10)
+tk.Frame(barra_lateral, height=10, bg="#f0f0f0").pack() # Espaçador
 
 # Grupo Estoque
-tk.Label(barra_lateral, text="Movimentação", font=("Arial", 10, "bold"), bg="#f0f0f0", fg="gray").pack(anchor="w")
-tk.Button(barra_lateral, text="📥 Entrada de Estoque", fg="green", command=entrada_estoque).pack(fill='x', pady=2)
-tk.Button(barra_lateral, text="📤 Saída de Estoque", fg="red", command=saida_estoque).pack(fill='x', pady=2)
-tk.Button(barra_lateral, text="🔄 Consignado", command=abrir_consignado).pack(fill='x', pady=2)
+tk.Label(barra_lateral, text="MOVIMENTAÇÃO", font=("Arial", 9, "bold"), bg="#f0f0f0", fg="gray").pack(anchor="w", padx=10)
+tk.Button(barra_lateral, text="📥  Entrada (+)", fg="green", command=ir_entrada, **btn_style).pack(fill='x', pady=1, padx=5)
+tk.Button(barra_lateral, text="📤  Saída (-)", fg="red", command=ir_saida, **btn_style).pack(fill='x', pady=1, padx=5)
+tk.Button(barra_lateral, text="🔄  Consignado", command=ir_consignado, **btn_style).pack(fill='x', pady=1, padx=5)
 
-# Separador visual
-tk.Frame(barra_lateral, height=2, bg="#ccc").pack(fill='x', pady=10)
+tk.Frame(barra_lateral, height=10, bg="#f0f0f0").pack() # Espaçador
 
 # Grupo Gestão
-tk.Label(barra_lateral, text="Gestão", font=("Arial", 10, "bold"), bg="#f0f0f0", fg="gray").pack(anchor="w")
-tk.Button(barra_lateral, text="🔍 Consulta Geral", command=consulta_estoque).pack(fill='x', pady=2)
-tk.Button(barra_lateral, text="📜 Histórico de Saídas", command=historico).pack(fill='x', pady=2)
-tk.Button(barra_lateral, text="🛒 Pedido de Compra", state='normal', command=compra).pack(fill='x', pady=2)
+tk.Label(barra_lateral, text="GESTÃO", font=("Arial", 9, "bold"), bg="#f0f0f0", fg="gray").pack(anchor="w", padx=10)
+tk.Button(barra_lateral, text="🔍  Consulta Geral", command=ir_consulta, **btn_style).pack(fill='x', pady=1, padx=5)
+tk.Button(barra_lateral, text="📜  Histórico", command=ir_historico, **btn_style).pack(fill='x', pady=1, padx=5)
+tk.Button(barra_lateral, text="🛒  Compras", command=ir_compra, **btn_style).pack(fill='x', pady=1, padx=5)
 
-# Botão Sair
-tk.Button(barra_lateral, text="❌ Sair do Sistema", command=sair, fg="white", bg="#d9534f").pack(side='bottom', fill='x', pady=20)
+# Botão Início e Sair
+tk.Frame(barra_lateral, height=20, bg="#f0f0f0").pack()
+tk.Button(barra_lateral, text="🏠  Início", command=mostrar_logo, bg="white").pack(fill='x', padx=5, pady=5)
+tk.Button(barra_lateral, text="❌  Sair", command=sair, bg="#ffcccc", fg="red").pack(side='bottom', fill='x', padx=5, pady=20)
 
-
-# --- Adicionando o Logo à ÁREA DE CONTEÚDO ---
-try:
-    # 1. Carrega a imagem original
-    logo_original = tk.PhotoImage(file="logo.png")
-    # 2. REDIMENSIONA a imagem (ex: para metade do tamanho)
-    logo_redimensionada = logo_original.subsample(3, 3)
-    # 3. Usa a imagem REDIMENSIONADA no Label
-    label_logo = tk.Label(area_conteudo, image=logo_redimensionada, bg="white")
-    # 4. [MUITO IMPORTANTE] Guarda uma referência da imagem
-    label_logo.image = logo_redimensionada 
-    label_logo.pack(expand=True, anchor="n", pady=20)
-except tk.TclError:
-    label_logo = tk.Label(area_conteudo, text="Imagem 'logo.png' não encontrada.", bg="white", fg="red")
-    label_logo.pack(expand=True, anchor="n", pady=20)
-
-
-# --- Iniciar a aplicação ---
+# --- Iniciar ---
+mostrar_logo()
 janela.mainloop()

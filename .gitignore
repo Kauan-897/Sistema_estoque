@@ -27,5 +27,8 @@ Thumbs.db
 # --- Logs de Erros ---
 *.log
 
-# --- Arquivo de Configuração de Variáveis de Ambiente ---
-.env
+# Ignorar pasta de backups
+_backups_antigos/
+
+# (Opcional) Se não quiser subir as planilhas de teste:
+planilhas_exemplo/
