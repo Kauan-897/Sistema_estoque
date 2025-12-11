@@ -1,0 +1,144 @@
+﻿Codigo;Nome do Produto;Quantidade Inicial;Estoque Minimo;Preco Custo;Preco Venda
+COD001;Exemplo: Parafuso Inox;100;10;0,5;1,2
+1;Bobina Slitter GA;0;500;6,5;8,5
+2;Bobina Slitter GI;;265;7,5;9,5
+3;Bobina Transvision;;265;7,5;9,5
+4;"GUIA LATERAL EM ""U"" 70x30";;120;;
+5;"GUIA LATERAL EM ""U"" 90x30";;36;;
+6;"GUIA LATERAL EM ""U"" 100X30";;0;;
+7;Testeira Systeg 200kg;;2;100;150
+8;Motor Systeg 200kg;;2;515;1080
+9;Testeira Mega 200kg;;2;100;150
+10;Motor Mega 200kg;;2;515;1080
+11;Motor Systeg 200DC;;1;773;1496
+12;Motor Mega 200DC;;1;1188;2426
+13;Testeira Systeg 300kg;;2;100;150
+14;Motor Systeg 300kg;;2;555;1160
+15;Testeira Mega 300kg;;2;100;150
+16;Motor Mega 300kg;;2;555;1160
+17;Motor Systeg 300DC;;1;945;1840
+18;Motor Mega 300DC;;1;1400;2850
+19;Testeira Systeg 400kg;;2;100;150
+20;Motor Systeg 400kg;;2;663;1376
+21;Testeira Mega 400kg;;2;100;150
+22;Motor Mega 400kg;;2;663;1376
+23;Testeira Systeg 500kg;;2;100;150
+24;Motor Systeg 500kg;;2;715;1480
+25;Testeira Mega 500kg;;2;100;150
+26;Motor Mega 500kg;;2;715;1480
+27;Testeira Systeg 600kg;;1;100;150
+28;Motor Systeg 600kg;;1;769;1588
+29;Testeira Mega 600kg;;1;100;150
+30;Motor Mega 600kg ;;1;769;1588
+31;Testeira Astro 600kg;;1;100;150
+32;Testeira Systeg 800kg;;1;100;150
+33;Motor Systeg 800kg;;1;1209;2468
+34;Testeira Mega 800kg;;1;100;150
+35;Motor Mega 800kg;;1;1209;2468
+36;Testeira Systeg 1000kg;;1;100;150
+37;Motor Systeg 1000kg;;1;1649;3348
+38;Testeira Mega 1000kg;1;1;100;150
+39;Motor Mega 1000kg;1;1;1649;3348
+40;"Bolacha Pino 4""";;4;;
+41;"Bolacha Pino 4"" 1/2";;4;;
+42;"Bolacha Pino 5""";;4;;
+43;"Bolacha Pino 5"" 1/2";;4;;
+44;"Bolacha Pino 6""";;4;;
+45;"Bolacha Pino 6"" 1/2";;4;;
+46;"Bolacha Pino 7""1/2";;4;;
+47;"Bolacha Pino 8""";;4;;
+48;"Bolacha Motor 4""";;2;;
+49;"Bolacha Motor 4"" 1/2";;2;;
+50;"Bolacha Motor 5""";;2;;
+51;"Bolacha Motor 5"" 1/2";;2;;
+52;"Bolacha Motor 6""";;2;;
+53;"Bolacha Motor 6"" 1/2";;2;;
+54;"Bolacha Motor 7""1/2";;2;;
+55;"Bolacha Motor 8""";;2;;
+56;"Tubo Eixo 4""1/2 ";;36;;
+57;"Tubo Eixo 5""";;0;;
+58;"Tubo Eixo 5""1/2";;0;;
+59;"Tubo Eixo 6""";;0;;
+60;"Tubo Eixo 8""";;0;;
+61;"Tubo Eixo 8""1/2 ";;0;;
+62;Botoeira MegaTron;;2;;
+63;Metalon 20x20 ;;1;;
+64;Metalon 20x40 ;;1;;
+65;Metalon 30x30;;1;;
+66;Metalon 25x25;;1;;
+67;Metalon 60x40 ;;30;89,41;
+68;Soleira 60x40;;30;89,41;
+69;Metalon 70x30;;1;122,15;
+70;Metalon 80x40 ;;36;105,47;
+71;"Cantoneira - 1 1/4"" 1/8";;2;;
+72;"Cantoneira - 2"" ";;0;;
+73;"Cantoneira - 2""  1/4";;0;;
+74;Trava Antiqueda PEQ (200 a 700Kg);;0;;
+75;Trava Antiqueda MED (800 a 1200Kg);;0;;
+76;Trava Antiqueda GDE (1300 a 2000Kg);;0;;
+77;Tapa Furo peça Plastica (20mm) - Preto;;300;;
+78;Tapa Furo peça Plastica (20mm) - Branco;;300;;
+79;Ponteira de Soleira Guia de 90;;10;;
+80;Ponteira de Soleira Guia de 70;;20;;
+81;Perfil Anti Ruido Preto;;400;;
+82;Perfil Anti Ruido Branco;;0;;
+83;Perfil Anti Ruido Cinza;;0;;
+84;Base de borracha;;100;;
+85;Trava Laminas Direita;;300;;
+86;Trava Laminas esquerda;;300;;
+87;Portinhola Lisa Direita ;;1;;
+88;Portinhola Lisa Esquerda;;1;;
+89;Armação para portinhola ;;0;;
+90;Portinhola Transvision Direita;;0;;
+91;Portinhola Transvision Esquerda;1;0;;
+92;Porta social Direita;;0;;
+93;Porta Social esquerda;;0;;
+94;Parabolt;;0;;
+95;Parafuso  1/4 x 70  (guia M10);;100;;
+96;Bucha Fisher (guia);;100;;
+97;Arruela (Trava Testeira) - 5/16;;50;;
+98;Porca (Trava Testeira) - 5/16;;50;;
+99;Parafuso (Trava Testeira) - 5/16;;50;;
+100;Abracadeira 3,6x200 (inforca gato);;10;;
+101;Porca Borboleta 1/4 x 3/4 (Alçapão);;50;;
+102;Porca Sextavada m10 (Motor);;50;;
+103;Arruela 3/8 x 1/2 (eixo);;100;;
+104;Porca 3/8 x 1/2 (eixo);;100;;
+105;Parafuso 3/8 x 1/2 (eixo);;100;;
+106;Arame de Solda;;1;;
+107;Tinta Eletrost Preto FoscoAcetinado 9005f;;0;;
+108;Tinta Eletrost  Preto Brilhante ;;0;;
+109;Tinta Eletrost Marrom 1003;;0;;
+110;Tinta Eletrostática Verde PBK - 0004;;0;;
+111;Tinta Eletrostática Cinza Fosco;;0;;
+112;Tinta Eletrostática Cinza 7040;;0;;
+113;Tinta Eletrostática Cinza 7037 -brt;;0;;
+114;Tinta Eletrostática Cinza 7016;;0;;
+115;Tinta Eletrostática Laranja liso brilhante PBF 006;;0;;
+116;Tinta Eletrostática Branca;;0;;
+117;Tinta Eletrost  Preto Semi-Brilhante 9005 - lacrado;;75;;
+118;Tinta Eletrostática Cinza7024;;0;;
+119;Tinta Eletrostática Azul Brilhante ;;0;;
+120;Tinta Eletrostática Preto Champanhe;;0;;
+121;Desengripante Anti-Corrozivo;;0;;
+122;Vasilina spray;;0;;
+123;Thinner 500 ml;;0;;
+124;Tinta Spray Preto Brilhante;;0;;
+125;Tinta Spray Preto Acetinado;;3;;
+126;Tinta Spray Marrom;;0;;
+127;Tinta Spray Marrom Ral (1 usado);;0;;
+128;Tinta Spray Verde colonial (1 usado);;0;;
+129;Tinta Spray Verde Gradil (2 usados);;0;;
+130;Tinta Spray Aluminio;;0;;
+131;Tinta Spray Azul Del Rey (1 usados);;0;;
+132;Tinta Spray Cinza Ral 7040 (5 usados);;0;;
+133;Tinta Spray Cinza Ral 7024 - RODRIGO ;;0;;
+134;Tinta Spray Cinza Ral 7037 - (1 usado);;0;;
+135;Tinta Spray Branco;;0;;
+136;Tinta Spray Branco azulado;;0;;
+137;Tinta Spray Azul Arara 5005;;0;;
+138;Tinta Spray Branco Braste;;0;;
+139;Tinta Spray Laranja;;0;;
+140;Tinta Spray Laranja Ral 2008;;0;;
+141;Barreira infravermelha;;0;;
+142;Bandeira;;0;;

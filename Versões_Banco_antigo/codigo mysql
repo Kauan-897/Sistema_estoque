@@ -95,8 +95,14 @@ CREATE TABLE IF NOT EXISTS consignado_usos (
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 );
 
-USE Pedido;
 
 -- Adiciona a coluna status, por padrão todo mundo nasce 'Ativo'
 ALTER TABLE estoque 
 ADD COLUMN status VARCHAR(10) NOT NULL DEFAULT 'Ativo';
+
+ALTER TABLE estoque ADD COLUMN estoque_minimo INT DEFAULT 5;
+
+ALTER TABLE estoque ADD COLUMN preco_custo DECIMAL(10, 2) DEFAULT 0.00;
+ALTER TABLE estoque ADD COLUMN preco_venda DECIMAL(10, 2) DEFAULT 0.00;
+
+ALTER TABLE usuarios ADD COLUMN nome VARCHAR(100) AFTER id;

@@ -24,16 +24,20 @@ TABLES = {}
 TABLES['estoque'] = """
     CREATE TABLE IF NOT EXISTS estoque (
         id INT PRIMARY KEY AUTO_INCREMENT,
-        codigo VARCHAR(50), 
+        codigo VARCHAR(50),
         Nome VARCHAR(255) NOT NULL UNIQUE,
         status VARCHAR(10) NOT NULL DEFAULT 'Ativo',
         Quantidade DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+        estoque_minimo INT DEFAULT 5,
+        preco_custo DECIMAL(10, 2) DEFAULT 0.00, -- <--- NOVO
+        preco_venda DECIMAL(10, 2) DEFAULT 0.00, -- <--- NOVO
         DataCadastro DATE DEFAULT (CURRENT_DATE)
     )"""
 
 TABLES['usuarios'] = """
     CREATE TABLE IF NOT EXISTS usuarios (
         id INT PRIMARY KEY AUTO_INCREMENT,
+        nome VARCHAR(100),  -- <--- ADICIONADO
         username VARCHAR(50) NOT NULL UNIQUE,
         password_hash VARCHAR(255) NOT NULL, 
         nivel VARCHAR(20) DEFAULT 'vendedor'
